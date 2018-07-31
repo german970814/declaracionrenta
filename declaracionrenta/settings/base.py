@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'main',
 ]
 
 MIDDLEWARE = [
@@ -101,3 +103,8 @@ STATICFILES_DIRS = (BASE_DIR('static'), )
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR('../media')
+
+AUTHENTICATION_BACKENDS = (
+    'main.backends.EmailAuthenticationBackend',
+    'django.contrib.auth.backends.ModelBackend',
+)

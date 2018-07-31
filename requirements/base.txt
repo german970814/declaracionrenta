@@ -3,5 +3,9 @@
 Django==2.0.7
 psycopg2==2.7.5
 psycopg2-binary==2.7.5
+django-treebeard==4.3
 pytz==2018.5
 django-environ==0.4.5
+djangorestframework==3.8.2
+django-filter==2.0.0
+drf-flex-fields==0.3.4
