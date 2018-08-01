@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from rest_flex_fields import FlexFieldsModelSerializer
 
 from . import models
+from .mixins import FlexFieldsModelSerializer
 
 
 class CondicionSerializer(serializers.ModelSerializer):
+    """Serializer de condiciones"""
     class Meta:
         model = models.Condicion
         fields = (
@@ -15,19 +16,25 @@ class CondicionSerializer(serializers.ModelSerializer):
 
 
 class ConjuntoSerializer(FlexFieldsModelSerializer):
+    """Serializer de conjuntos"""
     class Meta:
         model = models.Conjunto
         fields = (
             'id', 'parent', 'descripcion',
-            'nombre', 'identificador', 'repetible'
+            'nombre', 'identificador', 'repetible',
+            'children_set',
         )
 
     expandable_fields = {
-        'parent': (ConjuntoSerializer, {'source': 'conjunto'})
+        'parent': ('main.ConjuntoSerializer', {'source': 'parent'}),
+        'children_set': ('main.ConjuntoSerializer', {
+            'source': 'children_set', 'many': True, 'expand': 'children_set'
+        })
     }
 
 
 class CampoSerializer(FlexFieldsModelSerializer):
+    """Serializer de campos"""
     class Meta:
         model = models.Campo
         fields = (
@@ -37,11 +44,12 @@ class CampoSerializer(FlexFieldsModelSerializer):
         )
 
     expandable_fields = {
-        'conjunto': (ConjuntoSerializer, {'source': 'conjunto'})
+        'conjunto': ('main.ConjuntoSerializer', {'source': 'conjunto'})
     }
 
 
 class Declaracion(serializers.ModelSerializer):
+    """Serializer de la declaración de renta"""
     class Meta:
         model = models.Declaracion
         fields = ('id', 'formato')

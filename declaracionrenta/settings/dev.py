@@ -17,3 +17,9 @@ DEBUG = True
 ALLOWED_HOSTS = ['*']
 
 AUTH_PASSWORD_VALIDATORS = []
+
+INSTALLED_APPS += ['django_extensions',]
+
+SHELL_PLUS_PRE_IMPORTS = (
+    ('main.serializers', '*'),
+)

@@ -173,9 +173,11 @@ class Conjunto(SerializableMixin, AL_Node):
 
     @classmethod
     def get_declaracion_tree(cls):
+        """Obtiene el arbol de la declaracion de renta"""
         try:
             serializer_class = cls.get_serializer_class()
-            print(self.get_tree(0))
+            return serializer_class(
+                cls.objects.last().get_root(), expand=['~all'], depth=1).data
         except ImportError:
             raise ImportError(_('No se encontró el serializer para %s' % cls.__name__))
 
