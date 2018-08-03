@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Layout, Card, Icon } from 'antd';
 import TreeSide from './TreeSide';
 import ConjuntoSet from './ConjuntoSet';
+import EditConjunto from './EditConjunto'
 import ApiClient from './../../api';
 import Queries from './queries';
 
@@ -13,6 +14,7 @@ export default class ConjuntosPage extends Component {
     this.state = {
       conjuntos: [],
       conjuntoSelected: null,
+      conjuntoCrud: null,
       loadingCard: null
     }
   }
@@ -50,13 +52,19 @@ export default class ConjuntosPage extends Component {
     return <Card
       loading={this.state.loadingCard}
       title="Editar campos"
-      actions={[<Icon type="setting" />, <Icon type="edit" />, <Icon type="ellipsis" />]}
+      actions={[<Icon type="setting" />, <EditConjunto conjunto={this.state.conjuntoCrud} />, <Icon type="ellipsis" />]}
       style={{width: '100%'}}
       >
         {this.state.loadingCard === null ? <h5>Escoja un conjunto para empezar</h5> : <div>
-          <ConjuntoSet data={this.state.conjuntoSelected} />
+          <ConjuntoSet onTabClick={this.onTabClick.bind(this)} data={this.state.conjuntoSelected} />
         </div>}
       </Card>
+  }
+
+  onTabClick(conjunto) {
+    if (conjunto && conjunto.node) {
+      this.setState({ conjuntoCrud: conjunto.node })
+    }
   }
 
   conjuntoOptionSelected(event) {

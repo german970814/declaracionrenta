@@ -22,6 +22,11 @@ export default class ConjuntoSet extends Component {
     }
   }
 
+  get conjunto() {
+    const { conjunto } = this.props.data
+    return conjunto
+  }
+
   static hasChild(set, property='childrenSet') {
     return Boolean(set[property].edges) && Boolean(set[property].edges.length)
   }
@@ -31,6 +36,9 @@ export default class ConjuntoSet extends Component {
     const hasChild = ConjuntoSet.hasChild(conjunto)
     const defaultOpenedTab = hasChild ? conjunto.childrenSet.edges[0].node.id : ''
     this.setState({ selectedTab: defaultOpenedTab });
+    (this.props.onTabClick && defaultOpenedTab) && this.props.onTabClick(
+      this.getConjuntoByKey(defaultOpenedTab)
+    )
   }
 
   componentDidUpdate(prevProps, prevState) {
@@ -115,6 +123,11 @@ export default class ConjuntoSet extends Component {
     if (ConjuntoSet.hasChild(node, 'campos')) {
       const campos = node.campos.edges
       if (node.repetible) {
+        const popoverContent = <span>
+          <p>Este botón es demostrativo</p>
+          <p>Para que el usuario tenga la opción de repetir este conjunto de campos las veces que sea necesario</p>
+        </span>
+
         return <React.Fragment>
           <Row gutter={8 * campos.length}>
             {this.sort(campos).map((campo, index) => {
@@ -125,7 +138,9 @@ export default class ConjuntoSet extends Component {
           </Row>
           <Row>
             <Col span={24} push={22}>
-              <Button type="primary" shape="circle" size="large" icon="plus" />
+              <Popover placement="left" title="Descripción" content={popoverContent}>
+                <Button type="primary" shape="circle" size="large" icon="plus" />
+              </Popover>
             </Col>
           </Row>
         </React.Fragment>
@@ -151,7 +166,20 @@ export default class ConjuntoSet extends Component {
     </React.Fragment>
   }
 
+  getConjuntoByKey(key) {
+    if (ConjuntoSet.hasChild(this.conjunto)) {
+      return this.conjunto.childrenSet.edges.find(conjunto => {
+        return conjunto.node.id === key
+      })
+    }
+    return null
+  }
+
   onTabClick(key) {
+    if (this.props.onTabClick) {
+      const conjunto = this.getConjuntoByKey(key)
+      this.props.onTabClick(conjunto)
+    }
     this.setState({ selectedTab: key })
   }
 

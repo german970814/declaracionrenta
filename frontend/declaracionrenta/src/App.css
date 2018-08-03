@@ -5,3 +5,7 @@
 .ant-row {
     padding-bottom: 10px !important;
 }
+
+.ant-collapse > .ant-collapse-item.form-campo-collapse > .ant-collapse-header {
+    padding: 3px 10px 0px 40px !important;
+}
