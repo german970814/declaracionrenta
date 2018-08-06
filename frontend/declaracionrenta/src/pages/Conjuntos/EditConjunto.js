@@ -1,6 +1,10 @@
 import React, { Component } from 'react'
-import { Drawer, Button, Form, Input, Checkbox, Tabs } from 'antd'
+import { Drawer, Button, Form, Tabs } from 'antd'
 import FormCampo from './forms/FormCampo'
+import FormConjunto from './forms/FormConjunto'
+import ApiClient from './../../api';
+import mutate from './mutations'
+import Queries from './queries'
 
 
 class EditConjunto extends Component {
@@ -13,52 +17,8 @@ class EditConjunto extends Component {
       conjunto: props.conjunto || {}
     }
 
-    this.fields = {
-      nombre: {
-        key: 'nombre',
-        label: 'Nombre',
-        help: 'Este será el nombre del conjunto',
-        required: true
-      },
-      identificador: {
-        key: 'identificador',
-        label: 'Identificador',
-        help: 'Con este campo, reconocerá el conjunto en cualquier lugar de la aplicación',
-        required: true,
-        rules: [{
-          transform: (value) => {
-            const form = this.props.form
-            const identificador = value ? value.replace(/[\s+_+]/g, '-').replace(/^_+/g, '').toLowerCase() : value
-            form.setFieldsValue({ identificador })
-            return identificador
-          }, message: 'Este campo es requerido'
-        }],
-      },
-      repetible: {
-        key: 'repetible',
-        label: 'Repetible',
-        type: 'checkbox',
-        help: 'Al habilitar este campo, le das la opción al usuario de repetir las veces que necesite este conjunto'
-      },
-      automatico: {
-        key: 'automatico',
-        label: 'Automático',
-        type: 'checkbox',
-        help: 'Al habilitar este campo, el valor del conjunto dependerá de las condiciones establecidas'
-      },
-      requisitos: {
-        key: 'requisitos',
-        label: 'Requisitos',
-        type: 'textarea',
-        help: 'Estos serán los requisitos del usuario para llenar este conjunto'
-      },
-      descripcion: {
-        key: 'descripcion',
-        label: 'Decripción',
-        type: 'textarea',
-        help: 'Esta es la descripción de este conjunto'
-      }
-    }
+    this.formConjunto = React.createRef();
+    this.formCampo = React.createRef();
   }
 
   componentDidUpdate(prevProps) {
@@ -82,95 +42,62 @@ class EditConjunto extends Component {
     this.setState({ visible: false })
   }
 
-  handleSubmit() {
+  onFieldsChange(type, fieldChanged, allFields) {
+    this.setState({ [type]: Object.keys(allFields).some((key) => {
+      return Boolean(allFields[key].errors)
+    }) })
+  }
 
+  handleSubmitButton(event) {
+    if (!('formConjuntoError' in this.state) && !('formCampoError' in this.state)) return
+    const { formConjuntoError=false, formCampoError=false } = this.state
+    const hasError = formConjuntoError && formCampoError
+
+    if (!hasError) {
+      console.log(this.state.conjunto)
+      // ApiClient.graphql(...mutate('campoCreateUpdate', this.state.conjunto, {
+      //     type: 'ConjuntoNodeMutationInput',
+      //     query: Queries.CONJUNTO_CON_CHILDREN
+      // })).then(data => {console.log(data)})
+    }
+  }
+
+  handleSubmit(type, form, fields=[]) {
+    console.log(form);
+  }
+
+  onNewCampo(value) {
+    // Note: Este campo que se agrega puede ser eliminado si se recarga
+    // desde el padre a this.state.conjunto
+    this.state.conjunto && this.setState({
+      conjunto: Object.assign({}, this.state.conjunto, {
+        campos: { edges: [
+          ...this.state.conjunto.campos.edges,
+          { node: value }
+        ] }
+      })
+    })
   }
 
   renderFormConjunto() {
-    const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.form
-    const formItemLayout = {
-      labelCol: {
-        xs: { span: 24 },
-        sm: { span: 4 }
-      },
-      wrapperCol: {
-        xs: { span: 24 },
-        sm: { span: 20 }
-      }
-    }
-
-    return <Form onSubmit={this.handleSubmit.bind(this)}>
-      {Object.keys(this.fields).map((key, index) => {
-        const field = this.fields[key]
-        const fieldError = isFieldTouched(key) && getFieldError(key)
-
-        return <Form.Item
-          key={index}
-          {...formItemLayout}
-          label={field.label}
-          extra={field.help || ''}
-          validateStatus={fieldError ? 'error' : ''}
-          help={fieldError || ''}
-          >
-          {getFieldDecorator(key, this.getFieldDecorator(field))(this.renderField(field))}
-        </Form.Item>
-      })}
-    </Form>
+    return <FormConjunto
+      ref={this.formConjunto}
+      onFieldsChange={this.onFieldsChange.bind(this)}
+      conjunto={this.state.conjunto}
+      handleSubmit={this.handleSubmit.bind(this)} />
   }
 
   renderFormCampos() {
-    if (Boolean(this.state.conjunto.campos) && Boolean(this.state.conjunto.campos.edges.length)) {
-      const campos = this.sort(this.state.conjunto.campos.edges)
-      return <FormCampo campos={campos} />
-    }
-    // const campoStruct = {
-    //   nombre: '',
-    //   identificador: '',
-    //   numerico: false,
-    //   descripcion: '',
-    //   orden: '',
-    //   automatico: false
-    // }
-
-    // const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.form
-    // if (Boolean(this.state.conjunto.campos.edges) && Boolean(this.state.conjunto.campos.edges.length)) {
-    //   const campos = this.sort(this.state.conjunto.campos)
-
-    // }
-    // console.log(campos)
-    // return <Form onSubmit={this.handleSubmit.bind(this)}>
-
-    // </Form>
-  }
-
-  getFieldDecorator(field) {
-    const defaults = {
-      initialValue: this.state.conjunto[field.key] || (field.type === 'checkbox' ? false : '')
-    }
-    const rules = field.rules ? field.rules : []
-
-    if (field.type === 'checkbox') {
-      defaults['valuePropName'] = 'checked'
-    }
-
-    return {
-      rules: [
-        {required: field.required || false, message: 'Este campo es requerido'},
-        ...rules
-      ],
-      ...defaults
-    }
-  }
-
-  renderField(field) {
-    switch (field.type) {
-      case 'checkbox':
-        return <Checkbox >{field.placeholder || ''}</Checkbox>
-      case 'textarea':
-        return <Input.TextArea rows={4} />
-      default:
-        return <Input placeholder={field.placeholder || ''} />
-    }
+    const campos = (
+      Boolean(this.state.conjunto.campos) &&
+      Boolean(this.state.conjunto.campos.edges.length)) ?
+        this.sort(this.state.conjunto.campos.edges) : []
+    return <FormCampo
+      ref={this.formCampo}
+      onFieldsChange={this.onFieldsChange.bind(this)}
+      campos={campos}
+      onNewCampo={this.onNewCampo.bind(this)}
+      handleSubmit={this.handleSubmit.bind(this)} />
   }
 
   render() {
@@ -201,7 +128,7 @@ class EditConjunto extends Component {
           <Button style={{ marginRight: 8 }} onClick={this.onClose.bind(this)}>
             Cancelar
           </Button>
-          <Button onClick={this.onClose.bind(this)} type="primary">Guardar</Button>
+          <Button onClick={this.handleSubmitButton.bind(this)} type="primary">Guardar</Button>
         </div>
       </Drawer>
     </React.Fragment>

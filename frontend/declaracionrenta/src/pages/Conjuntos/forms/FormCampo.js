@@ -17,15 +17,7 @@ class FormCampo extends Component {
       identificador: {
         key: 'identificador',
         placeholder: 'Identificador',
-        help: 'Con este campo, reconocerá el conjunto en cualquier lugar de la aplicación',
-        // rules: [{
-        //   transform: (value) => {
-        //     const form = this.props.form
-        //     const identificador = value ? value.replace(/[\s+_+]/g, '-').replace(/^_+/g, '').toLowerCase() : value
-        //     // form.setFieldsValue({ identificador })
-        //     return identificador
-        //   }, message: 'Este campo es requerido'
-        // }],
+        help: 'Con este campo, reconocerá el conjunto en cualquier lugar de la aplicación'
       },
       numerico: {
         key: 'numerico',
@@ -133,13 +125,25 @@ class FormCampo extends Component {
 
   onSubmitNewCampo(event) {
     event.preventDefault()
+    event.stopPropagation()
+    const fields = Object.keys(this.fields).map(field => `new-${field}`)
 
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      console.log(err)
+    this.props.form.validateFields(fields, {}, (err, values) => {
       if (!err) {
-        console.log(values)
+        const campo = {}
+        Object.keys(values).forEach(key => {
+          campo[key.replace('new-', '')] = values[key]
+        })
+        this.props.form.resetFields(fields)
+        this.props.onNewCampo && this.props.onNewCampo(campo)
       }
     })
+  }
+
+  handleSubmit(event) {
+    event.preventDefault()
+    event.stopPropagation()
+    this.props.handleSubmit && this.props.handleSubmit('formCampoData', this.props.form)
   }
 
   render() {
@@ -149,7 +153,7 @@ class FormCampo extends Component {
     fieldOrder = fieldOrder.slice(1, fieldOrder.length)
 
     return <React.Fragment>
-      <Form onSubmit={this.props.onSubmit}>
+      <Form onSubmit={this.handleSubmit.bind(this)}>
         <Collapse bordered={false}>
           {campos.map((campo, index) => {
             return <Collapse.Panel key={index} className="form-campo-collapse"
@@ -183,7 +187,7 @@ class FormCampo extends Component {
           {this.renderNewField(fieldOrder, getFieldDecorator)}
         </Collapse>
         <Form.Item>
-          <Button type="primary" htmlType="submit">Guardar Nuevo Campo</Button>
+          <Button type="primary" htmlType="submit">Agregar Campo</Button>
         </Form.Item>
       </Form>
     </React.Fragment>
@@ -191,4 +195,8 @@ class FormCampo extends Component {
 
 }
 
-export default Form.create()(FormCampo)
+export default Form.create({
+  onFieldsChange: (props, changedValues, allValues) => {
+    props.onFieldsChange && props.onFieldsChange('formCampoError', changedValues, allValues)
+  }
+})(FormCampo)

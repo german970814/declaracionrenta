@@ -3,7 +3,17 @@ export default class Client {
   static base_url = process.env.REACT_APP_API_URL;
   static client = window.fetch.bind(window);
 
-  static graphql(query) {
+  static graphql(query, variables=null, operationName=null) {
+    const defaultOptions = {}
+
+    if (variables !== null) {
+      defaultOptions['variables'] = variables
+    }
+
+    if (operationName !== null) {
+      defaultOptions['operationName'] = operationName
+    }
+
     const payload = {
       headers: {
         // 'Access-Control-Allow-Origin': '*'
@@ -13,7 +23,8 @@ export default class Client {
       // credentials: 'include',
       method: 'POST',
       body: JSON.stringify({
-        query: query
+        query: query,
+        ...defaultOptions
       })
     }
 
