@@ -45,6 +45,7 @@ class Condicion(SerializableMixin, models.Model):
     """
 
     SERIALIZER_CLASS = 'main.serializers.CondicionSerializer'
+    # SCHEMA_CLASS = 'main.schema.ConjuntoNode'
 
     # constantes
     MAYOR_QUE = '>'
@@ -110,6 +111,7 @@ class Campo(SerializableMixin, models.Model):
     """
 
     SERIALIZER_CLASS = 'main.serializers.CampoSerializer'
+    SCHEMA_CLASS = 'main.schema.CampoNode'
 
     nombre = models.CharField(max_length=255, verbose_name=_('Nombre'))
     numerico = models.NullBooleanField(verbose_name=_('Numérico'), null=True)
@@ -148,6 +150,7 @@ class Conjunto(SerializableMixin, AL_Node):
     """
 
     SERIALIZER_CLASS = 'main.serializers.ConjuntoSerializer'
+    SCHEMA_CLASS = 'main.schema.ConjuntoNode'
 
     parent = models.ForeignKey(
         'self', related_name='children_set',

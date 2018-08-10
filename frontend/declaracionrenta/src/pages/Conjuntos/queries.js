@@ -23,6 +23,10 @@ const CONJUNTO = `
   id, identificador, nombre, campos { ${CAMPOS} },
   descripcion, repetible, requisitos, automatico
 `
+const CONJUNTO_SIN_RELAY = `
+  id, identificador, nombre, campos { ${CAMPO} },
+  descripcion, repetible, requisitos, automatico
+`
 const CONJUNTOS = pluralizeQuery(CONJUNTO)
 
 const CONJUNTO_CON_CHILDREN = `${CONJUNTO}, childrenSet { ${CONJUNTOS} }`
@@ -41,5 +45,7 @@ const functions = {
 
 export default {
   CAMPO, CONJUNTOS, CONJUNTOS_CON_CHILDREN,
+  CONJUNTO_CON_CHILDREN, CONJUNTO,
+  CONJUNTO_SIN_RELAY,
   CONJUNTOS_BASE, ...functions
 }

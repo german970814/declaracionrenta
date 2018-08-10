@@ -31,7 +31,7 @@ class FormConjunto extends Component {
         required: true,
         rules: [{
           transform: (value) => {
-            const form = this.props.form
+            const form = this.props.formParent
             const identificador = value ? value.replace(/[\s+_+]/g, '-').replace(/^_+/g, '').toLowerCase() : value
             form.setFieldsValue({ identificador })
             return identificador
@@ -98,14 +98,13 @@ class FormConjunto extends Component {
   handleSubmit(event) {
     event.preventDefault()
     event.stopPropagation()
-    this.props.handleSubmit && this.props.handleSubmit('formConjuntoData', this.props.form)
+    this.props.handleSubmit && this.props.handleSubmit('formConjuntoData', this.props.formParent)
   }
 
   render() {
-    const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.form
+    const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.formParent
 
-    return <Form onSubmit={this.handleSubmit.bind(this)}>
-      {Object.keys(this.fields).map((key, index) => {
+    return Object.keys(this.fields).map((key, index) => {
         const field = this.fields[key]
         const fieldError = isFieldTouched(key) && getFieldError(key)
 
@@ -119,8 +118,7 @@ class FormConjunto extends Component {
         >
           {getFieldDecorator(key, this.getFieldDecorator(field))(this.renderField(field))}
         </Form.Item>
-      })}
-    </Form>
+      })
   }
 }
 

@@ -14,7 +14,8 @@ class EditConjunto extends Component {
 
     this.state = {
       visible: false,
-      conjunto: props.conjunto || {}
+      conjunto: props.conjunto || {},
+      buttonLoading: false
     }
 
     this.formConjunto = React.createRef();
@@ -43,9 +44,48 @@ class EditConjunto extends Component {
   }
 
   onFieldsChange(type, fieldChanged, allFields) {
+    const typeObject = {}
+    // console.log(type)
     this.setState({ [type]: Object.keys(allFields).some((key) => {
+      typeObject[key] = allFields[key].value
       return Boolean(allFields[key].errors)
-    }) })
+    }), [`${type}_object`]: typeObject })
+    console.log(typeObject)
+  }
+
+  unrelay(object) {
+    function slice(obj, field) {
+      const entries = Object.entries(obj)
+      const position = entries.findIndex(el => el[0] === field)
+      if (position >= 0) {
+        const sliced = entries.slice(position, position + 1).map(entry => entry[1])
+        // delete obj[field]
+        return sliced ? sliced[0]: sliced
+      }
+      return null
+    }
+
+    Object.keys(object).forEach(field => {
+      if (object[field] instanceof Object) {
+        if ('edges' in object[field]) {
+          const edges = slice(object[field], 'edges').map(node => {
+            return node.node
+          })
+          object[field] = edges
+        }
+      }
+    })
+    return object
+  }
+
+  getObjectToSave() {
+    return Object.assign({}, this.state.conjunto, {
+      ...this.state.formConjuntoError_object
+    }, {
+      campos: {
+        // edges: 
+      }
+    })
   }
 
   handleSubmitButton(event) {
@@ -54,16 +94,27 @@ class EditConjunto extends Component {
     const hasError = formConjuntoError && formCampoError
 
     if (!hasError) {
-      console.log(this.state.conjunto)
-      // ApiClient.graphql(...mutate('campoCreateUpdate', this.state.conjunto, {
-      //     type: 'ConjuntoNodeMutationInput',
-      //     query: Queries.CONJUNTO_CON_CHILDREN
-      // })).then(data => {console.log(data)})
+      this.setState({ buttonLoading: true })
+      const conjunto = Object.assign({}, this.state.conjunto)
+      delete conjunto['childrenSet']
+      const data = this.unrelay(conjunto)
+      ApiClient.graphql(...mutate('conjuntoCreateUpdate', data, {
+          type: 'ConjuntoNodeMutationInput',
+          query: Queries.CONJUNTO_SIN_RELAY
+      })).then(data => {
+        console.log(data)
+        this.setState({ buttonLoading: false })
+      })
     }
   }
 
-  handleSubmit(type, form, fields=[]) {
-    console.log(form);
+  handleSubmit(event) {
+    event.preventDefault()
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        console.log(values)
+      }
+    })
   }
 
   onNewCampo(value) {
@@ -83,6 +134,7 @@ class EditConjunto extends Component {
     return <FormConjunto
       ref={this.formConjunto}
       onFieldsChange={this.onFieldsChange.bind(this)}
+      formParent={this.props.form}
       conjunto={this.state.conjunto}
       handleSubmit={this.handleSubmit.bind(this)} />
   }
@@ -96,6 +148,7 @@ class EditConjunto extends Component {
       ref={this.formCampo}
       onFieldsChange={this.onFieldsChange.bind(this)}
       campos={campos}
+      formParent={this.props.form}
       onNewCampo={this.onNewCampo.bind(this)}
       handleSubmit={this.handleSubmit.bind(this)} />
   }
@@ -116,20 +169,22 @@ class EditConjunto extends Component {
           height: 'calc(100% - 55px)',
           overflow: 'auto', paddingBottom: 53
         }}>
-        <Tabs defaultActiveKey="0" tabPosition="top" style={{ height: 'auto' }}>
-          <Tabs.TabPane key="0" tab="Conjunto">
-            {this.renderFormConjunto()}
-          </Tabs.TabPane>
-          <Tabs.TabPane key="1" tab="Campos">
-            {this.renderFormCampos()}
-          </Tabs.TabPane>
-        </Tabs>
-        <div className="edit-conjunto-footer">
-          <Button style={{ marginRight: 8 }} onClick={this.onClose.bind(this)}>
-            Cancelar
-          </Button>
-          <Button onClick={this.handleSubmitButton.bind(this)} type="primary">Guardar</Button>
-        </div>
+        <Form onSubmit={this.handleSubmit.bind(this)}>
+          <Tabs defaultActiveKey="0" tabPosition="top" style={{ height: 'auto' }}>
+            <Tabs.TabPane key="0" tab="Conjunto">
+              {this.renderFormConjunto()}
+            </Tabs.TabPane>
+            <Tabs.TabPane key="1" tab="Campos">
+              {this.renderFormCampos()}
+            </Tabs.TabPane>
+          </Tabs>
+          <div className="edit-conjunto-footer">
+            <Button style={{ marginRight: 8 }} onClick={this.onClose.bind(this)}>
+              Cancelar
+            </Button>
+            <Button htmlType="submit" type="primary">Guardar</Button>
+          </div>
+        </Form>
       </Drawer>
     </React.Fragment>
   }
