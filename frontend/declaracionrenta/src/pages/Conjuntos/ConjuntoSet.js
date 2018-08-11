@@ -27,6 +27,13 @@ export default class ConjuntoSet extends Component {
     return conjunto
   }
 
+  /**
+   * Retorna verdadero si cumple con la condición de tener un array no vacío en la
+   * propiedad o atributo especificado
+   * 
+   * @param {Object} set Objeto de Relay
+   * @param {String} property Propiedad o atributo a ser evaluado
+   */
   static hasChild(set, property='childrenSet') {
     return Boolean(set[property].edges) && Boolean(set[property].edges.length)
   }
@@ -47,6 +54,10 @@ export default class ConjuntoSet extends Component {
     }
   }
 
+  /**
+   * Función que hace una llamada a la api para obtener el conjunto
+   * de acuerdo al tab seleccionado y así obtener sus campos
+   */
   getChildrensOfNode() {
     ApiClient.graphql(
       Queries.getConjuntoByID(this.state.selectedTab, true)
@@ -61,6 +72,13 @@ export default class ConjuntoSet extends Component {
     })
   }
 
+  /**
+   * Función para ordenar los campos de acuerdo al orden que se estableció en la creación
+   * y asignación de campos de un conjunto
+   * 
+   * @param {Array} campos Conjunto de campos con objetos de acuerdo a la estructura
+   * dada por Relay
+   */
   sort(campos) {
     return campos.sort((a, b) => {
       return a.node.orden > b.node.orden

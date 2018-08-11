@@ -28,6 +28,13 @@ class EditConjunto extends Component {
     }
   }
 
+  /**
+   * Función para ordenar los campos de acuerdo al orden que se estableció en la creación
+   * y asignación de campos de un conjunto
+   * 
+   * @param {Array} campos Conjunto de campos con objetos de acuerdo a la estructura
+   * dada por Relay
+   */
   sort(campos) {
     return campos.sort((a, b) => {
       return a.node.orden > b.node.orden
@@ -53,6 +60,14 @@ class EditConjunto extends Component {
     console.log(typeObject)
   }
 
+  /**
+   * Unrelay es una función hecha para deshacer la forma como relay envía
+   * los objetos luego de una llamada a la api de Django y GraphQL. Lo que hace
+   * basicamente la función es quitar las keys con valores de `node` y `edges`
+   * y subir su contenido un nivel de acuerdo a la estructura donde se encuentren
+   * 
+   * @param {Object} object Objeto al cual se le va a practicar el unrelay
+   */
   unrelay(object) {
     function slice(obj, field) {
       const entries = Object.entries(obj)
@@ -88,6 +103,12 @@ class EditConjunto extends Component {
     })
   }
 
+  /**
+   * Maneja los datos del formulario una vez se hace submit y reune los datos
+   * disponibles para enviarlos y hacer la operación deseada por el usuario
+   * 
+   * @param {EventListenerObject} event 
+   */
   handleSubmitButton(event) {
     if (!('formConjuntoError' in this.state) && !('formCampoError' in this.state)) return
     const { formConjuntoError=false, formCampoError=false } = this.state
@@ -117,6 +138,12 @@ class EditConjunto extends Component {
     })
   }
 
+  /**
+   * Función que recibe un campo nuevo, el cuál es asignado y guardado
+   * siguiendo la estructura de relay
+   * 
+   * @param {Object} value El nuevo campo que se va a agregar
+   */
   onNewCampo(value) {
     // Note: Este campo que se agrega puede ser eliminado si se recarga
     // desde el padre a this.state.conjunto
