@@ -2,9 +2,6 @@ import React, { Component } from 'react'
 import { Drawer, Button, Form, Tabs } from 'antd'
 import FormCampo from './forms/FormCampo'
 import FormConjunto from './forms/FormConjunto'
-import ApiClient from './../../api';
-import mutate from './mutations'
-import Queries from './queries'
 
 
 class EditConjunto extends Component {
@@ -18,7 +15,6 @@ class EditConjunto extends Component {
       buttonLoading: false
     }
 
-    this.formConjunto = React.createRef();
     this.formCampo = React.createRef();
   }
 
@@ -48,16 +44,6 @@ class EditConjunto extends Component {
   onClose() {
     this.props.onClose && this.props.onClose()
     this.setState({ visible: false })
-  }
-
-  onFieldsChange(type, fieldChanged, allFields) {
-    const typeObject = {}
-    // console.log(type)
-    this.setState({ [type]: Object.keys(allFields).some((key) => {
-      typeObject[key] = allFields[key].value
-      return Boolean(allFields[key].errors)
-    }), [`${type}_object`]: typeObject })
-    console.log(typeObject)
   }
 
   /**
@@ -93,51 +79,6 @@ class EditConjunto extends Component {
     return object
   }
 
-  getObjectToSave() {
-    return Object.assign({}, this.state.conjunto, {
-      ...this.state.formConjuntoError_object
-    }, {
-      campos: {
-        // edges: 
-      }
-    })
-  }
-
-  /**
-   * Maneja los datos del formulario una vez se hace submit y reune los datos
-   * disponibles para enviarlos y hacer la operación deseada por el usuario
-   * 
-   * @param {EventListenerObject} event 
-   */
-  handleSubmitButton(event) {
-    if (!('formConjuntoError' in this.state) && !('formCampoError' in this.state)) return
-    const { formConjuntoError=false, formCampoError=false } = this.state
-    const hasError = formConjuntoError && formCampoError
-
-    if (!hasError) {
-      this.setState({ buttonLoading: true })
-      const conjunto = Object.assign({}, this.state.conjunto)
-      delete conjunto['childrenSet']
-      const data = this.unrelay(conjunto)
-      ApiClient.graphql(...mutate('conjuntoCreateUpdate', data, {
-          type: 'ConjuntoNodeMutationInput',
-          query: Queries.CONJUNTO_SIN_RELAY
-      })).then(data => {
-        console.log(data)
-        this.setState({ buttonLoading: false })
-      })
-    }
-  }
-
-  handleSubmit(event) {
-    event.preventDefault()
-    this.props.form.validateFieldsAndScroll((err, values) => {
-      if (!err) {
-        console.log(values)
-      }
-    })
-  }
-
   /**
    * Función que recibe un campo nuevo, el cuál es asignado y guardado
    * siguiendo la estructura de relay
@@ -157,13 +98,25 @@ class EditConjunto extends Component {
     })
   }
 
+  onConjuntoUpdated(conjuntoUpdated) {
+    this.setState({
+      conjunto: Object.assign({}, this.state.conjunto, {
+        ...conjuntoUpdated
+      })
+    }, () => {
+      console.log(this.state.conjunto)
+    })
+  }
+
+  onCamposUpdated() {
+    this.props.onConjuntoUpdate && this.props.onConjuntoUpdate()
+  }
+
   renderFormConjunto() {
     return <FormConjunto
-      ref={this.formConjunto}
-      onFieldsChange={this.onFieldsChange.bind(this)}
-      formParent={this.props.form}
-      conjunto={this.state.conjunto}
-      handleSubmit={this.handleSubmit.bind(this)} />
+      onClose={this.onClose.bind(this)}
+      onConjuntoUpdated={this.onConjuntoUpdated.bind(this)}
+      conjunto={this.state.conjunto} />
   }
 
   renderFormCampos() {
@@ -171,13 +124,14 @@ class EditConjunto extends Component {
       Boolean(this.state.conjunto.campos) &&
       Boolean(this.state.conjunto.campos.edges.length)) ?
         this.sort(this.state.conjunto.campos.edges) : []
+
     return <FormCampo
-      ref={this.formCampo}
-      onFieldsChange={this.onFieldsChange.bind(this)}
       campos={campos}
       formParent={this.props.form}
-      onNewCampo={this.onNewCampo.bind(this)}
-      handleSubmit={this.handleSubmit.bind(this)} />
+      onClose={this.onClose.bind(this)}
+      onCamposUpdated={this.onCamposUpdated.bind(this)}
+      conjunto={this.state.conjunto}
+      onNewCampo={this.onNewCampo.bind(this)} />
   }
 
   render() {
@@ -196,22 +150,14 @@ class EditConjunto extends Component {
           height: 'calc(100% - 55px)',
           overflow: 'auto', paddingBottom: 53
         }}>
-        <Form onSubmit={this.handleSubmit.bind(this)}>
-          <Tabs defaultActiveKey="0" tabPosition="top" style={{ height: 'auto' }}>
-            <Tabs.TabPane key="0" tab="Conjunto">
-              {this.renderFormConjunto()}
-            </Tabs.TabPane>
-            <Tabs.TabPane key="1" tab="Campos">
-              {this.renderFormCampos()}
-            </Tabs.TabPane>
-          </Tabs>
-          <div className="edit-conjunto-footer">
-            <Button style={{ marginRight: 8 }} onClick={this.onClose.bind(this)}>
-              Cancelar
-            </Button>
-            <Button htmlType="submit" type="primary">Guardar</Button>
-          </div>
-        </Form>
+        <Tabs defaultActiveKey="0" tabPosition="top" style={{ height: 'auto' }}>
+          <Tabs.TabPane key="0" tab="Conjunto">
+            {this.renderFormConjunto()}
+          </Tabs.TabPane>
+          {this.state.conjunto.id && <Tabs.TabPane key="1" tab="Campos">
+            {this.renderFormCampos()}
+          </Tabs.TabPane>}
+        </Tabs>
       </Drawer>
     </React.Fragment>
   }

@@ -36,7 +36,7 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
     expandable_fields = {
         'parent': ('main.ConjuntoSerializer', {'source': 'parent'}),
         'campos': ('main.CampoSerializer', {
-            'source': 'campos', 'many': True
+            'source': 'campos', 'many': True, 'required': False
         }),
         'children_set': ('main.ConjuntoSerializer', {
             'source': 'children_set', 'many': True,
@@ -50,24 +50,40 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
 
     def update(self, instance, validated_data):
         pop_data = ['campos', 'parent', 'children_set']
+        default_kwargs_data = {
+            'campos': {
+                'conjunto': instance.id if instance else None
+            }
+        }
+
         with transaction.atomic():
             kwargs = {}
-            default_data_kwargs = {'conjunto': instance}
-            campos = []
-            data_campos = self.data.pop('campos')
-            for index, campo in enumerate(data_campos):
-                campo_instance = None
-                if 'id' in campo:
-                    campo_instance = models.Campo.objects.get(id=campo.get('id'))
-                campo_serializer = CampoSerializer(
-                    instance=campo_instance, data=validated_data['campos'][index])
-                campo_serializer.is_valid()
-                campos.append(campo_serializer.save())
+            for field in pop_data:
+                instances = []
+                data_field = self.data.pop(field)
+                validated_data_field = validated_data.get(field)
+
+                if validated_data_field and field in self.expanded_fields:
+                    serializer_class = self._import_serializer_class(
+                        self.expandable_fields[field][0])
+                    model_field = serializer_class.Meta.model
+
+                    for index, data in enumerate(validated_data_field):
+                        data_instance = None
+                        if (len(data_field) - 1) >= index and 'id' in data_field[index]:
+                            data_instance = model_field.objects.get(id=data_field[index].get('id'))
+                        elif field in default_kwargs_data:
+                            data.update(default_kwargs_data[field])
+                        serializer = serializer_class(
+                            instance=data_instance, data=data)
+                        serializer.is_valid()
+                        instances.append(serializer.save())
+                    getattr(instance, field).set(instances)
+
             for field in validated_data:
                 if field in pop_data and field in self.expanded_fields:
                     continue
                 kwargs[field] = validated_data[field]
-            instance.campos.set(campos)
             instance.update(**kwargs)
         return instance
 

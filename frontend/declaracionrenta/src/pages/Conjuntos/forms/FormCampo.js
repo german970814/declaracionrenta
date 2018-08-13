@@ -1,11 +1,17 @@
 import React, { Component } from 'react'
-import { Form, Collapse, Input, Checkbox, Button } from 'antd'
-
+import { Form, Collapse, Input, Checkbox, Button, Col, Row } from 'antd'
+import ApiClient from './../../../api';
+import mutate from './../mutations'
+import Queries from './../queries'
 
 class FormCampo extends Component {
 
   constructor(props) {
     super(props)
+
+    this.state = {
+      buttonLoading: false
+    }
 
     this.fields = {
       nombre: {
@@ -88,7 +94,7 @@ class FormCampo extends Component {
   }
 
   renderHiddenField() {
-    return <Input type="hidden" />
+    return <input type="hidden" />
   }
 
   getDuplicatedCampo() {
@@ -104,15 +110,24 @@ class FormCampo extends Component {
 
     return <Collapse.Panel className="form-campo-collapse"
       header={
-        <Form.Item
-          key={'new-nombre'}
-        >
-          {getFieldDecorator(
-            'new-nombre',
-            this.getFieldDecorator(campo, this.fields.nombre))(
-              this.renderField(this.fields.nombre))
-          }
-        </Form.Item>
+        <Row gutter={12}>
+          <Col span={22}>
+            <Form.Item
+              key={'new-nombre'}
+            >
+              {getFieldDecorator(
+                'new-nombre',
+                this.getFieldDecorator(campo, this.fields.nombre))(
+                  this.renderField(this.fields.nombre))
+              }
+            </Form.Item>
+          </Col>
+          <Col span={2}>
+            <Form.Item>
+              <Button type="primary" onClick={this.onSubmitNewCampo.bind(this)}>+</Button>
+            </Form.Item>
+          </Col>
+        </Row>
       }
       style={{ borderRaius: 4, border: 0, overflow: 'hidden' }}
     >
@@ -132,13 +147,14 @@ class FormCampo extends Component {
     event.stopPropagation()
     const fields = Object.keys(this.fields).map(field => `new-${field}`)
 
-    this.props.form.validateFields(fields, {}, (err, values) => {
+    this.props.formParent.validateFields(fields, {}, (err, values) => {
       if (!err) {
         const campo = {}
         Object.keys(values).forEach(key => {
           campo[key.replace('new-', '')] = values[key]
         })
-        this.props.form.resetFields(fields)
+        campo.conjunto = this.props.conjunto.id
+        this.props.formParent.resetFields(fields)
         this.props.onNewCampo && this.props.onNewCampo(campo)
       }
     })
@@ -147,64 +163,101 @@ class FormCampo extends Component {
   handleSubmit(event) {
     event.preventDefault()
     event.stopPropagation()
-    this.props.handleSubmit && this.props.handleSubmit('formCampoData', this.props.form)
+
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        const fields = []
+        const ids = Object.keys(values).filter(key => key.endsWith('-id'))
+
+        ids.forEach(id => {
+          const campo = {}
+          const campoFields = Object.keys(values).filter(key => key.startsWith(values[id]))
+          campoFields.forEach(field => {
+            campo[field.replace(`${values[id]}-`, '')] = values[field]
+          })
+          fields.push(campo)
+        })
+
+
+        this.setState({ buttonLoading: true })
+        const mutationName = 'conjuntoCreateUpdate'
+        const conjunto = Object.assign({}, this.props.conjunto, {
+          campos: fields
+        })
+
+        ApiClient.graphql(...mutate(mutationName, conjunto, {
+          type: 'ConjuntoNodeMutationInput',
+          query: Queries.CONJUNTO_SIN_RELAY
+        })).then(data => {
+          console.log(data)
+          this.props.onCamposUpdated && this.props.onCamposUpdated()
+          this.setState({ buttonLoading: false })
+        })
+
+        console.log(fields)
+      }
+    })
   }
 
   renderFormNewCampo() {
-    const { getFieldDecorator } = this.props.form
+    const { getFieldDecorator } = this.props.formParent
     let fieldOrder = Object.keys(this.fields)
     fieldOrder = fieldOrder.slice(1, fieldOrder.length)
   
-    return <div>
-      <Collapse bordered={false}>
-        {this.renderNewField(fieldOrder, getFieldDecorator)}
-      </Collapse>
-      <Form.Item>
-        <Button type="primary" onClick={this.onSubmitNewCampo.bind(this)}>Agregar Campo</Button>
-      </Form.Item>
-    </div>
+    return <Collapse bordered={false}>
+      {this.renderNewField(fieldOrder, getFieldDecorator)}
+    </Collapse>
   }
 
   render() {
-    const { getFieldDecorator } = this.props.formParent
+    const { getFieldDecorator } = this.props.form
     const { campos } = this.props
     let fieldOrder = Object.keys(this.fields)
     fieldOrder = fieldOrder.slice(1, fieldOrder.length)
 
     return <React.Fragment>
-      <Collapse bordered={false}>
-        {campos.map((campo, index) => {
-          return <Collapse.Panel key={index} className="form-campo-collapse"
-            header={
-              <div>
-                <Form.Item key={`${campo.node.id}-nombre`}>
-                  { getFieldDecorator(
-                    `${campo.node.id}-nombre`,
-                    this.getFieldDecorator(campo.node, this.fields.nombre))(
-                      this.renderField(this.fields.nombre))
-                  }
+      <Form onSubmit={this.handleSubmit.bind(this)}>
+        <Collapse bordered={false}>
+          {campos.map((campo, index) => {
+            const id = campo.node.id || index
+            return <Collapse.Panel key={index} className="form-campo-collapse"
+              header={
+                <div>
+                  <Form.Item key={`${id}-nombre`}>
+                    { getFieldDecorator(
+                      `${id}-nombre`,
+                      this.getFieldDecorator(campo.node, this.fields.nombre))(
+                        this.renderField(this.fields.nombre))
+                    }
+                  </Form.Item>
+                  <Form.Item key={`${id}-id`}>
+                    {getFieldDecorator(`${id}-id`, { initialValue: id })(
+                      this.renderHiddenField()
+                    )}
+                  </Form.Item>
+                </div>
+              }
+              style={{ borderRaius: 4, border: 0, overflow: 'hidden' }}
+            >
+              {fieldOrder.map((field) => {
+                return <Form.Item key={`${id}-${this.fields[field].key}`}>
+                  {getFieldDecorator(
+                    `${id}-${this.fields[field].key}`,
+                    this.getFieldDecorator(campo.node, this.fields[field]))(
+                      this.renderField(this.fields[field]))}
                 </Form.Item>
-                <Form.Item key={`${campo.node.id}-id`}>
-                  {getFieldDecorator(`${campo.node.id}-id`, { initialValue: campo.node.id })(
-                    this.renderHiddenField()
-                  )}
-                </Form.Item>
-              </div>
-            }
-            style={{ borderRaius: 4, border: 0, overflow: 'hidden' }}
-          >
-            {fieldOrder.map((field) => {
-              return <Form.Item key={`${campo.node.id}-${this.fields[field].key}`}>
-                {getFieldDecorator(
-                  `${campo.node.id}-${this.fields[field].key}`,
-                  this.getFieldDecorator(campo.node, this.fields[field]))(
-                    this.renderField(this.fields[field]))}
-              </Form.Item>
-            })}
-          </Collapse.Panel>
-        })}
-      </Collapse>
-      {this.renderFormNewCampo()}
+              })}
+            </Collapse.Panel>
+          })}
+        </Collapse>
+        {this.renderFormNewCampo()}
+        <div className="edit-conjunto-footer">
+          <Button style={{ marginRight: 8 }} onClick={this.props.onClose}>
+            Cancelar
+            </Button>
+          <Button loading={this.state.buttonLoading} htmlType="submit" type="primary">Guardar</Button>
+        </div>
+      </Form>
     </React.Fragment>
   }
 

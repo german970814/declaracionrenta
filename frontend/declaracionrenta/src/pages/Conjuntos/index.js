@@ -49,6 +49,12 @@ export default class ConjuntosPage extends Component {
     });
   }
 
+  onConjuntoUpdate() {
+    this.setState({ loadingCard: true }, () => {
+      this.getConjuntoByTab(this.props.match.params.tab)
+    })
+  }
+
   componentDidUpdate(prevProps, prevState) {
     const { tab=undefined } = this.props.match.params
     if (tab !== prevProps.match.params.tab) {
@@ -60,7 +66,7 @@ export default class ConjuntosPage extends Component {
     return <Card
       loading={this.state.loadingCard}
       title="Editar campos"
-      actions={[<Icon type="setting" />, <EditConjunto conjunto={this.state.conjuntoCrud} />, <Icon type="ellipsis" />]}
+      actions={[<Icon type="setting" />, <EditConjunto onConjuntoUpdate={this.onConjuntoUpdate.bind(this)} conjunto={this.state.conjuntoCrud} />, <Icon type="ellipsis" />]}
       style={{width: '100%'}}
       >
         {this.state.loadingCard === null ? <h5>Escoja un conjunto para empezar</h5> : <div>
@@ -69,10 +75,12 @@ export default class ConjuntosPage extends Component {
       </Card>
   }
 
+  /**
+   * Listener para asignar el conjunto listo para el crud
+   * @param {Object} conjunto Conjunto seleccionado por el tab
+   */
   onTabClick(conjunto) {
-    if (conjunto && conjunto.node) {
-      this.setState({ conjuntoCrud: conjunto.node })
-    }
+    this.setState({ conjuntoCrud: (conjunto && conjunto.node) ? conjunto.node : {} })
   }
 
   /**

@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
-import { Form, Input, Checkbox } from 'antd'
-
+import { Form, Input, Checkbox, Button } from 'antd'
+import ApiClient from './../../../api';
+import mutate from './../mutations'
+import Queries from './../queries'
 
 class FormConjunto extends Component {
   static layout = {
@@ -17,6 +19,10 @@ class FormConjunto extends Component {
   constructor(props) {
     super(props)
 
+    this.state = {
+      buttonLoading: false
+    }
+
     this.fields = {
       nombre: {
         key: 'nombre',
@@ -31,7 +37,7 @@ class FormConjunto extends Component {
         required: true,
         rules: [{
           transform: (value) => {
-            const form = this.props.formParent
+            const form = this.props.form
             const identificador = value ? value.replace(/[\s+_+]/g, '-').replace(/^_+/g, '').toLowerCase() : value
             form.setFieldsValue({ identificador })
             return identificador
@@ -98,13 +104,33 @@ class FormConjunto extends Component {
   handleSubmit(event) {
     event.preventDefault()
     event.stopPropagation()
-    this.props.handleSubmit && this.props.handleSubmit('formConjuntoData', this.props.formParent)
+
+    this.props.form.validateFieldsAndScroll((err, values) => {
+      if (!err) {
+        this.setState({ buttonLoading: true })
+        const mutationName = 'conjuntoCreateUpdate'
+        const conjunto = { ...values }
+        if (this.props.conjunto.id) {
+          conjunto.id = this.props.conjunto.id
+        }
+        ApiClient.graphql(...mutate(mutationName, conjunto, {
+          type: 'ConjuntoNodeMutationInput',
+          query: Queries.CONJUNTO_SIN_RELAY
+        })).then(data => {
+          this.props.onConjuntoUpdated && this.props.onConjuntoUpdated(data.data[mutationName])
+          this.setState({ buttonLoading: false })
+        })
+      }
+    })
+
+
   }
 
   render() {
-    const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.formParent
+    const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.form
 
-    return Object.keys(this.fields).map((key, index) => {
+    return <Form onSubmit={this.handleSubmit.bind(this)}>
+      {Object.keys(this.fields).map((key, index) => {
         const field = this.fields[key]
         const fieldError = isFieldTouched(key) && getFieldError(key)
 
@@ -118,7 +144,14 @@ class FormConjunto extends Component {
         >
           {getFieldDecorator(key, this.getFieldDecorator(field))(this.renderField(field))}
         </Form.Item>
-      })
+      })}
+      <div className="edit-conjunto-footer">
+        <Button style={{ marginRight: 8 }} onClick={this.props.onClose}>
+          Cancelar
+          </Button>
+        <Button loading={this.state.buttonLoading} htmlType="submit" type="primary">Guardar</Button>
+      </div>
+    </Form>
   }
 }
 

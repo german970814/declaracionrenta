@@ -24,8 +24,8 @@ const CONJUNTO = `
   descripcion, repetible, requisitos, automatico
 `
 const CONJUNTO_SIN_RELAY = `
-  id, identificador, nombre, campos { ${CAMPO} },
-  descripcion, repetible, requisitos, automatico
+  id, identificador, nombre, descripcion,
+  repetible, requisitos, automatico
 `
 const CONJUNTOS = pluralizeQuery(CONJUNTO)
 

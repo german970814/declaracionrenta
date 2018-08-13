@@ -60,7 +60,9 @@ class ConjuntoNodeMutation(mixins.ModelSerializerObjectType, SerializerMutation)
     @classmethod
     def get_serializer_kwargs(cls, root, info, **input):
         kwargs = super(cls, ConjuntoNodeMutation).get_serializer_kwargs(root, info, **input)
-        kwargs['expand'] = ['campos']
+        variable_values = info.variable_values
+        if 'params' in info.variable_values:
+            kwargs['expand'] = ['campos'] if 'campos' in info.variable_values['params'] else []
         return kwargs
 
 
