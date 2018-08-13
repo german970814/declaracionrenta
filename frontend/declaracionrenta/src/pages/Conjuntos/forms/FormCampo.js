@@ -189,12 +189,9 @@ class FormCampo extends Component {
           type: 'ConjuntoNodeMutationInput',
           query: Queries.CONJUNTO_SIN_RELAY
         })).then(data => {
-          console.log(data)
           this.props.onCamposUpdated && this.props.onCamposUpdated()
           this.setState({ buttonLoading: false })
         })
-
-        console.log(fields)
       }
     })
   }

@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, withRouter } from 'react-router-dom'
 import {
   Tabs, Input, InputNumber,
   Button, Row, Col, Popover,
@@ -12,19 +12,23 @@ import './index.css'
 const TabPane = Tabs.TabPane
 
 
-export default class ConjuntoSet extends Component {
+class ConjuntoSet extends Component {
 
   constructor(props) {
     super(props)
     this.state = {
-      selectedTab: null,
-      child: []
+      child: [],
+      loading: false
     }
   }
 
   get conjunto() {
     const { conjunto } = this.props.data
     return conjunto
+  }
+
+  get selectedTab() {
+    return this.props.match.params.crud
   }
 
   /**
@@ -35,21 +39,26 @@ export default class ConjuntoSet extends Component {
    * @param {String} property Propiedad o atributo a ser evaluado
    */
   static hasChild(set, property='childrenSet') {
+    if (!set) return false
     return Boolean(set[property].edges) && Boolean(set[property].edges.length)
   }
 
   componentDidMount() {
     const { conjunto } = this.props.data
     const hasChild = ConjuntoSet.hasChild(conjunto)
-    const defaultOpenedTab = hasChild ? conjunto.childrenSet.edges[0].node.id : ''
-    this.setState({ selectedTab: defaultOpenedTab });
-    (this.props.onTabClick && defaultOpenedTab) && this.props.onTabClick(
-      this.getConjuntoByKey(defaultOpenedTab)
+    if (!this.selectedTab) {
+      const defaultOpenedTab = hasChild ? conjunto.childrenSet.edges[0].node.id : '';
+      this.updateHistory(defaultOpenedTab);
+    } else {
+      this.getChildrensOfNode()
+    }
+    (this.props.onTabClick && this.selectedTab) && this.props.onTabClick(
+      this.getConjuntoByKey(this.selectedTab)
     )
   }
 
   componentDidUpdate(prevProps, prevState) {
-    if (prevState.selectedTab !== this.state.selectedTab) {
+    if (prevProps.match.params.crud !== this.props.match.params.crud) {
       this.getChildrensOfNode()
     }
   }
@@ -59,15 +68,16 @@ export default class ConjuntoSet extends Component {
    * de acuerdo al tab seleccionado y así obtener sus campos
    */
   getChildrensOfNode() {
+    this.setState({ loading: true })
     ApiClient.graphql(
-      Queries.getConjuntoByID(this.state.selectedTab, true)
+      Queries.getConjuntoByID(this.selectedTab, true)
     ).then(data => {
       const { conjunto } = data.data
       if (conjunto) {
         const hasChild = ConjuntoSet.hasChild(conjunto)
-        this.setState({ child: hasChild ? conjunto.childrenSet.edges : [] })
+        this.setState({ child: hasChild ? conjunto.childrenSet.edges : [], loading: false })
       } else {
-        this.setState({ child: [] })
+        this.setState({ child: [], loading: false })
       }
     })
   }
@@ -118,7 +128,7 @@ export default class ConjuntoSet extends Component {
           {childrens.map((conjunto, index) => {
             const header = <span>
               {`${conjunto.node.nombre} `}
-              {<Link to={`/conjuntos/tab=${this.state.selectedTab}`}>Ver Completo</Link>}
+              {<Link to={`/conjuntos/${this.selectedTab}`}>Ver Completo</Link>}
             </span>
             return <Collapse.Panel
               key={index}
@@ -198,13 +208,24 @@ export default class ConjuntoSet extends Component {
       const conjunto = this.getConjuntoByKey(key)
       this.props.onTabClick(conjunto)
     }
-    this.setState({ selectedTab: key })
+    this.updateHistory(key)
+  }
+
+  updateHistory(tab) {
+    if (this.props.match.params.crud) {
+      this.props.history.push({
+        pathname: this.props.location.pathname.replace(
+          this.props.match.params.crud, tab)
+      })
+    } else {
+      this.props.history.push({ pathname: `${this.props.location.pathname}/${tab}` })
+    }
   }
 
   renderContent(conjunto) {
     const hasChild = ConjuntoSet.hasChild(conjunto)
 
-    return <Tabs defaultActiveKey={this.state.selectedTab} tabPosition="top" style={{height: 'auto'}} onTabClick={this.onTabClick.bind(this)}>
+    return !this.state.loading && <Tabs defaultActiveKey={this.selectedTab} tabPosition="top" style={{height: 'auto'}} onTabClick={this.onTabClick.bind(this)}>
       {hasChild ?
         conjunto.childrenSet.edges.map((conjunto) => {
           return <TabPane tab={conjunto.node.nombre} key={conjunto.node.id}>{this.renderTabContent(conjunto.node)}</TabPane>
@@ -222,3 +243,5 @@ export default class ConjuntoSet extends Component {
   }
 
 }
+
+export default withRouter(ConjuntoSet)

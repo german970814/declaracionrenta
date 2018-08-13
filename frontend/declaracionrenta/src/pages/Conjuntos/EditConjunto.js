@@ -22,6 +22,12 @@ class EditConjunto extends Component {
     if (prevProps.conjunto !== this.props.conjunto) {
       this.setState({ conjunto: this.props.conjunto })
     }
+
+    if ((prevProps.conjunto && this.props.conjunto) &&
+      (prevProps.conjunto.id && !this.props.conjunto.id))
+    {
+      this.setState({ visible: true })
+    }
   }
 
   /**
@@ -109,12 +115,14 @@ class EditConjunto extends Component {
   }
 
   onCamposUpdated() {
-    this.props.onConjuntoUpdate && this.props.onConjuntoUpdate()
+    this.props.onConjuntoUpdate && this.props.onConjuntoUpdate(this.state.conjunto.id)
   }
 
   renderFormConjunto() {
+    const conjuntoParent = this.props.conjuntoParent ? this.props.conjuntoParent.conjunto : {}
     return <FormConjunto
       onClose={this.onClose.bind(this)}
+      conjuntoParent={conjuntoParent}
       onConjuntoUpdated={this.onConjuntoUpdated.bind(this)}
       conjunto={this.state.conjunto} />
   }

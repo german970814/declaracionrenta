@@ -49,8 +49,8 @@ export default class ConjuntosPage extends Component {
     });
   }
 
-  onConjuntoUpdate() {
-    this.setState({ loadingCard: true }, () => {
+  onConjuntoUpdate(conjuntoID) {
+    this.setState({ loadingCard: false }, () => {
       this.getConjuntoByTab(this.props.match.params.tab)
     })
   }
@@ -66,7 +66,10 @@ export default class ConjuntosPage extends Component {
     return <Card
       loading={this.state.loadingCard}
       title="Editar campos"
-      actions={[<Icon type="setting" />, <EditConjunto onConjuntoUpdate={this.onConjuntoUpdate.bind(this)} conjunto={this.state.conjuntoCrud} />, <Icon type="ellipsis" />]}
+      actions={[<Icon type="setting" />, <EditConjunto
+        onConjuntoUpdate={this.onConjuntoUpdate.bind(this)}
+        conjunto={this.state.conjuntoCrud}
+        conjuntoParent={this.state.conjuntoSelected} />, <Icon type="ellipsis" />]}
       style={{width: '100%'}}
       >
         {this.state.loadingCard === null ? <h5>Escoja un conjunto para empezar</h5> : <div>
@@ -93,7 +96,7 @@ export default class ConjuntosPage extends Component {
   conjuntoOptionSelected(event) {
     window.localStorage.setItem('keyPath', JSON.stringify(event.keyPath))
     if (event.key !== this.props.match.params.tab) {
-      this.props.history.push({ pathname: `/conjuntos/tab=${event.key}` });
+      this.props.history.push({ pathname: `/conjuntos/${event.key}` });
     }
   }
 

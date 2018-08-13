@@ -26,7 +26,8 @@ class App extends Component {
         <Router>
           <Switch>
             <Route exact path="/conjuntos" component={ConjuntosLoadable} />
-            <Route exact path="/conjuntos/tab=:tab" component={ConjuntosLoadable} />
+            <Route exact path="/conjuntos/:tab" component={ConjuntosLoadable} />
+            <Route exact path="/conjuntos/:tab/:crud" component={ConjuntosLoadable} />
             <Redirect from="/" to="/conjuntos" />
             <Route component={(props) => {
               return <h1>Not found</h1>

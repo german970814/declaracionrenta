@@ -112,6 +112,9 @@ class FormConjunto extends Component {
         const conjunto = { ...values }
         if (this.props.conjunto.id) {
           conjunto.id = this.props.conjunto.id
+        } else {
+          console.log(this.props.conjuntoParent.id)
+          conjunto.parent = this.props.conjuntoParent.id
         }
         ApiClient.graphql(...mutate(mutationName, conjunto, {
           type: 'ConjuntoNodeMutationInput',
