@@ -44,12 +44,8 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
         })
     }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # print(kwargs)
-
     def update(self, instance, validated_data):
-        pop_data = ['campos', 'parent', 'children_set']
+        pop_data = ['campos', 'children_set']
         default_kwargs_data = {
             'campos': {
                 'conjunto': instance.id if instance else None
@@ -60,7 +56,7 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
             kwargs = {}
             for field in pop_data:
                 instances = []
-                data_field = self.data.pop(field)
+                data_field = self.data.get(field)
                 validated_data_field = validated_data.get(field)
 
                 if validated_data_field and field in self.expanded_fields:
