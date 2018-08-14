@@ -83,11 +83,14 @@ class ConjuntoSet extends Component {
       Queries.getConjuntoByID(this.selectedTab, true)
     ).then(data => {
       const { conjunto } = data.data
+      // `this.updater.isMounted` es para prevenir el error de que se está
+      // llamando al state cuando el componente está siendo desmontado
       if (conjunto) {
         const hasChild = ConjuntoSet.hasChild(conjunto)
-        this.setState({ child: hasChild ? conjunto.childrenSet.edges : [], loading: false })
+        this.updater.isMounted(this) && this.setState(
+          { child: hasChild ? conjunto.childrenSet.edges : [], loading: false })
       } else {
-        this.setState({ child: [], loading: false })
+        this.updater.isMounted(this) && this.setState({ child: [], loading: false })
       }
     })
   }
