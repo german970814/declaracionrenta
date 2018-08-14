@@ -22,11 +22,19 @@ class ConjuntoSet extends Component {
     }
   }
 
+  /**
+   * Getter para el conjunto que viene de los props
+   * del componente
+   */
   get conjunto() {
     const { conjunto } = this.props.data
     return conjunto
   }
 
+  /**
+   * Getter para el tab que viene desde la url dado
+   * el parámetro `crud`
+   */
   get selectedTab() {
     return this.props.match.params.crud
   }
@@ -59,6 +67,8 @@ class ConjuntoSet extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.match.params.crud !== this.props.match.params.crud) {
+      // si cambia la pestaña que se está viendo, se intentan obtener
+      // todos los childrens del nodo o conjunto actual
       this.getChildrensOfNode()
     }
   }
@@ -95,6 +105,12 @@ class ConjuntoSet extends Component {
     })
   }
 
+  /**
+   * Renderiza el label del campo con un popover en caso de tener descripción
+   * o de lo contrario solo renderiza el nombre
+   * 
+   * @param {Object} campo El campo a partir del cual se mostrará el label
+   */
   resolveCampoLabel(campo) {
     if (campo.descripcion) {
       return <Popover title="Descripción" content={<p>{campo.descripcion}</p>}>
@@ -104,6 +120,13 @@ class ConjuntoSet extends Component {
     return <strong className="fieldset-title">{campo.nombre}</strong>
   }
 
+  /**
+   * Función que busca resolver los campos del conjunto, de acuerdo a las especificaciones
+   * de cada campo
+   * 
+   * @param {Object} campo El objeto campo que servirá para obtener los datos del campo
+   * @param {Boolean} label Define si se renderiza con label o no
+   */
   resolveCampo(campo, label=true) {
     if (campo.numerico) {
       return <div>
@@ -128,7 +151,7 @@ class ConjuntoSet extends Component {
           {childrens.map((conjunto, index) => {
             const header = <span>
               {`${conjunto.node.nombre} `}
-              {<Link to={`/conjuntos/${this.selectedTab}`}>Ver Completo</Link>}
+              {<Link to={`/conjuntos/${this.selectedTab}/${conjunto.node.id}`}>Ver Completo</Link>}
             </span>
             return <Collapse.Panel
               key={index}
@@ -194,6 +217,12 @@ class ConjuntoSet extends Component {
     </React.Fragment>
   }
 
+  /**
+   * Retorna el conjunto con el id específicado
+   * de acuerdo a los conjuntos hijos que tenga definido
+   * 
+   * @param {String} key Identificador del conjunto
+   */
   getConjuntoByKey(key) {
     if (ConjuntoSet.hasChild(this.conjunto)) {
       return this.conjunto.childrenSet.edges.find(conjunto => {
@@ -203,6 +232,12 @@ class ConjuntoSet extends Component {
     return null
   }
 
+  /**
+   * Callback cuando se hace click en el tab el cual es encargado
+   * de actualizar la historia y la url
+   * 
+   * @param {String} key Identificadr del conjunto
+   */
   onTabClick(key) {
     if (this.props.onTabClick) {
       const conjunto = this.getConjuntoByKey(key)
@@ -211,6 +246,12 @@ class ConjuntoSet extends Component {
     this.updateHistory(key)
   }
 
+  /**
+   * Funcion que se encarga de actualizar la url y la historia
+   * de acuerdo al parámetro `crud`
+   * 
+   * @param {String} tab Identificador del conjunto y tab
+   */
   updateHistory(tab) {
     if (this.props.match.params.crud) {
       this.props.history.push({

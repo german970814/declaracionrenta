@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.db import transaction
 
 from . import models
-from .mixins import FlexFieldsModelSerializer
+from .mixins import FlexFieldsModelSerializer, PrimaryKeyRelatedFieldGraphQl
 
 
 class CondicionSerializer(serializers.ModelSerializer):
@@ -19,6 +19,9 @@ class CondicionSerializer(serializers.ModelSerializer):
 
 class ConjuntoSerializer(FlexFieldsModelSerializer):
     """Serializer de conjuntos"""
+    parent = PrimaryKeyRelatedFieldGraphQl(
+        queryset=models.Conjunto.objects.all(), required=False)
+
     class Meta:
         model = models.Conjunto
         fields = (

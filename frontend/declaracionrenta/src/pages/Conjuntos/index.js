@@ -50,9 +50,7 @@ export default class ConjuntosPage extends Component {
   }
 
   onConjuntoUpdate(conjuntoID) {
-    this.setState({ loadingCard: false }, () => {
-      this.getConjuntoByTab(this.props.match.params.tab)
-    })
+    this.getConjuntoByTab(this.props.match.params.tab)
   }
 
   componentDidUpdate(prevProps, prevState) {

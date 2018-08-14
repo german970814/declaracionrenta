@@ -113,20 +113,19 @@ class FormConjunto extends Component {
         if (this.props.conjunto.id) {
           conjunto.id = this.props.conjunto.id
         } else {
-          console.log(this.props.conjuntoParent.id)
           conjunto.parent = this.props.conjuntoParent.id
         }
         ApiClient.graphql(...mutate(mutationName, conjunto, {
           type: 'ConjuntoNodeMutationInput',
           query: Queries.CONJUNTO_SIN_RELAY
         })).then(data => {
-          this.props.onConjuntoUpdated && this.props.onConjuntoUpdated(data.data[mutationName])
+          this.props.onConjuntoUpdated && this.props.onConjuntoUpdated(
+            data.data[mutationName], !Boolean(this.props.conjunto.id)
+          )
           this.setState({ buttonLoading: false })
         })
       }
     })
-
-
   }
 
   render() {

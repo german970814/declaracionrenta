@@ -15,7 +15,7 @@ class EditConjunto extends Component {
       buttonLoading: false
     }
 
-    this.formCampo = React.createRef();
+    this.formCampo = React.createRef()
   }
 
   componentDidUpdate(prevProps) {
@@ -104,14 +104,27 @@ class EditConjunto extends Component {
     })
   }
 
-  onConjuntoUpdated(conjuntoUpdated) {
+  /**
+   * Callback para realizar una acción una vez el conjunto seleccionado
+   * fue actualizado desde el servidor. Lo que hace es actualizar
+   * el conjunto del estado para re-renderizar lo necesario
+   * 
+   * @param {Object} conjuntoUpdated El conjunto que se actualizó
+   */
+  onConjuntoUpdated(conjuntoUpdated, isNew=false) {
+    // Actualiza los datos del conjunto
+    // Esto funcionará siempre y cuando en el query de la mutación
+    // no se retornen los campos, de ser así, dado a la estructura
+    // usada por relay, el comportamiento no será el deseado
     this.setState({
       conjunto: Object.assign({}, this.state.conjunto, {
         ...conjuntoUpdated
       })
-    }, () => {
-      console.log(this.state.conjunto)
-    })
+    });
+
+    (isNew && this.props.onConjuntoUpdate) && this.props.onConjuntoUpdate(
+      this.state.conjunto.id
+    )
   }
 
   onCamposUpdated() {
