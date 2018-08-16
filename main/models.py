@@ -45,7 +45,7 @@ class Condicion(SerializableMixin, models.Model):
     """
 
     SERIALIZER_CLASS = 'main.serializers.CondicionSerializer'
-    # SCHEMA_CLASS = 'main.schema.ConjuntoNode'
+    SCHEMA_CLASS = 'main.schema.CondicionNode'
 
     # constantes
     MAYOR_QUE = '>'

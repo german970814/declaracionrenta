@@ -13,23 +13,23 @@ class BaseNode(graphene.Node):
     Interface para remover el encoding base64 y usar
     el default para los id de django
     """
-    # @staticmethod
-    # def to_global_id(type, id):
-    #     return id
-
-    # @staticmethod
-    # def get_node_from_global_id(info, global_id, only_type=None):
-    #     id = global_id
+    pass
 
 
 class ConjuntoNode(DjangoObjectType):
+    """ObjectType for Conjunto"""
     class Meta:
         model = models.Conjunto
-        filter_fields = ['nombre', 'identificador', 'descripcion']
+        filter_fields = {
+            'nombre': ['exact'],
+            'identificador': ['exact', 'icontains'],
+            'descripcion': ['exact']
+        }
         interfaces = (BaseNode, )
 
 
 class CampoNode(DjangoObjectType):
+    """ObjectType for Campo"""
     class Meta:
         model = models.Campo
         filter_fields = {
@@ -37,6 +37,14 @@ class CampoNode(DjangoObjectType):
             'identificador': ['exact', 'icontains'],
             'conjunto__identificador': ['exact']
         }
+        interfaces = (BaseNode, )
+
+
+class CondicionNode(DjangoObjectType):
+    """ObjectType for Condicion"""
+    class Meta:
+        model = models.Condicion
+        filter_fields = ['tipo']
         interfaces = (BaseNode, )
 
 
@@ -73,6 +81,8 @@ class Query(graphene.AbstractType):
 
     campo = BaseNode.Field(CampoNode)
     campos = DjangoFilterConnectionField(CampoNode)
+
+    condiciones = DjangoFilterConnectionField(CondicionNode, description=_('Todas las condiciones'))
 
     def resolve_conjuntos_base(self, context, **kwargs):
         return models.Conjunto.objects.last().get_root().get_children()

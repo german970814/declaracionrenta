@@ -3,7 +3,10 @@
 // TODO REFORM QUERIES
 
 
-const query = (query) => {
+const query = (query, params=null) => {
+  if (params) {
+    return `query ($params: ${params}) { ${query} }`
+  }
   return `query { ${query} }`
 }
 
@@ -43,9 +46,17 @@ const functions = {
   }
 }
 
+const IDENTIFICADOR_SEARCH = query(`
+  conjuntos (identificador_Icontains: $params) {
+    ${pluralizeQuery('identificador')}
+  }
+  campos (identificador_Icontains: $params) {
+    ${pluralizeQuery('identificador')}
+  }`, 'String')
+
 export default {
   CAMPO, CONJUNTOS, CONJUNTOS_CON_CHILDREN,
   CONJUNTO_CON_CHILDREN, CONJUNTO,
-  CONJUNTO_SIN_RELAY,
+  CONJUNTO_SIN_RELAY, IDENTIFICADOR_SEARCH,
   CONJUNTOS_BASE, ...functions
 }

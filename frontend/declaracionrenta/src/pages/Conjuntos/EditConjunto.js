@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Drawer, Button, Form, Tabs } from 'antd'
 import FormCampo from './forms/FormCampo'
 import FormConjunto from './forms/FormConjunto'
+import Condiciones from './Condiciones'
 
 
 class EditConjunto extends Component {
@@ -12,10 +13,11 @@ class EditConjunto extends Component {
     this.state = {
       visible: false,
       conjunto: props.conjunto || {},
-      buttonLoading: false
+      buttonLoading: false,
+      showTabCampos: true
     }
 
-    this.formCampo = React.createRef()
+    this.condicionesModal = React.createRef()
   }
 
   componentDidUpdate(prevProps) {
@@ -131,12 +133,27 @@ class EditConjunto extends Component {
     this.props.onConjuntoUpdate && this.props.onConjuntoUpdate(this.state.conjunto.id)
   }
 
+  onAutomaticoConjuntoChange(value) {
+    this.setState({ showTabCampos: !value })
+    if (this.condicionesModal.current && value) {
+      this.condicionesModal.current.showModal()
+    }
+  }
+
+  renderCondiciones() {
+    return <Condiciones
+      ref={this.condicionesModal}
+      form={{...this.props.form}}
+      model={this.state.conjunto} />
+  }
+
   renderFormConjunto() {
     const conjuntoParent = this.props.conjuntoParent ? this.props.conjuntoParent.conjunto : {}
     return <FormConjunto
       onClose={this.onClose.bind(this)}
       conjuntoParent={conjuntoParent}
       onConjuntoUpdated={this.onConjuntoUpdated.bind(this)}
+      onAutomaticoChange={this.onAutomaticoConjuntoChange.bind(this)}
       conjunto={this.state.conjunto} />
   }
 
@@ -171,11 +188,12 @@ class EditConjunto extends Component {
           height: 'calc(100% - 55px)',
           overflow: 'auto', paddingBottom: 53
         }}>
+        {this.renderCondiciones()}
         <Tabs defaultActiveKey="0" tabPosition="top" style={{ height: 'auto' }}>
           <Tabs.TabPane key="0" tab="Conjunto">
             {this.renderFormConjunto()}
           </Tabs.TabPane>
-          {this.state.conjunto.id && <Tabs.TabPane key="1" tab="Campos">
+          {(this.state.conjunto.id && this.state.showTabCampos) && <Tabs.TabPane key="1" tab="Campos">
             {this.renderFormCampos()}
           </Tabs.TabPane>}
         </Tabs>

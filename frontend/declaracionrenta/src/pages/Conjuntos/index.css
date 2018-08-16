@@ -13,3 +13,27 @@
     background: #fff;
     border-radius: 0 0 4px 4px;
 }
+
+.ant-form-inline .ant-form-item {
+    margin-right: 0px !important;
+}
+
+.draggable {
+    /* flex: 1; */
+    display: flex;
+    margin: 10px;
+    flex-basis: 0;
+}
+
+.droppable {
+    /* display: flex; */
+    flex-direction: row;
+    flex-wrap: nowrap;
+    /* justify-content: space-evenly; */
+    justify-content: space-between;
+    overflow: scroll;
+}
+
+.droppable .ant-form-item-control {
+    line-height: inherit !important;
+}

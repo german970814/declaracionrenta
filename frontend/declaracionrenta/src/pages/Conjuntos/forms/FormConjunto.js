@@ -54,7 +54,8 @@ class FormConjunto extends Component {
         key: 'automatico',
         label: 'Automático',
         type: 'checkbox',
-        help: 'Al habilitar este campo, el valor del conjunto dependerá de las condiciones establecidas'
+        help: 'Al habilitar este campo, el valor del conjunto dependerá de las condiciones establecidas',
+        helpWithValue: (onClick) => <Button onClick={onClick}>Ver condiciones</Button>
       },
       requisitos: {
         key: 'requisitos',
@@ -129,18 +130,28 @@ class FormConjunto extends Component {
   }
 
   render() {
-    const { getFieldDecorator, getFieldError, isFieldTouched } = this.props.form
+    const { getFieldDecorator, getFieldError, isFieldTouched, getFieldValue } = this.props.form
 
     return <Form onSubmit={this.handleSubmit.bind(this)}>
       {Object.keys(this.fields).map((key, index) => {
         const field = this.fields[key]
         const fieldError = isFieldTouched(key) && getFieldError(key)
+        let extra = field.help || ''
+
+        if (
+          ('helpWithValue' in field) && (getFieldValue(key) ||
+          (this.props.conjunto && (key in this.props.conjunto) && this.props.conjunto[key]))
+        ) {
+          extra = field.helpWithValue(() => {
+            this.props.onAutomaticoChange(true)
+          })
+        }
 
         return <Form.Item
           key={index}
           {...FormConjunto.layout}
           label={field.label}
-          extra={field.help || ''}
+          extra={extra}
           validateStatus={fieldError ? 'error' : ''}
           help={fieldError || ''}
         >
@@ -150,7 +161,7 @@ class FormConjunto extends Component {
       <div className="edit-conjunto-footer">
         <Button style={{ marginRight: 8 }} onClick={this.props.onClose}>
           Cancelar
-          </Button>
+        </Button>
         <Button loading={this.state.buttonLoading} htmlType="submit" type="primary">Guardar</Button>
       </div>
     </Form>
@@ -159,6 +170,9 @@ class FormConjunto extends Component {
 
 export default Form.create({
   onFieldsChange: (props, changedValues, allValues) => {
+    if ('automatico' in changedValues) {
+      props.onAutomaticoChange && props.onAutomaticoChange(changedValues.automatico.value)
+    }
     props.onFieldsChange && props.onFieldsChange('formConjuntoError', changedValues, allValues)
   }
 })(FormConjunto)
