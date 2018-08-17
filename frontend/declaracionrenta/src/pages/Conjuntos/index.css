@@ -19,18 +19,37 @@
 }
 
 .draggable {
-    /* flex: 1; */
+    flex: 1;
+    padding-right: 30px;
+}
+
+.icon-guide {
+    width: 100%;
+    height: 100%;
+    padding: 5px 15px 0 0;
+    font-size: 20px;
+}
+
+/* .droppable {
     display: flex;
-    margin: 10px;
-    flex-basis: 0;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    overflow: scroll;
+} */
+
+.condicion-content {
+    margin-left: 50px;
+}
+
+.operator {
+    display: inline-block;
+    margin-right: 10px;
 }
 
 .droppable {
-    /* display: flex; */
-    flex-direction: row;
-    flex-wrap: nowrap;
-    /* justify-content: space-evenly; */
-    justify-content: space-between;
+    display: -webkit-box;
+    box-sizing: border-box;
     overflow: scroll;
 }
 

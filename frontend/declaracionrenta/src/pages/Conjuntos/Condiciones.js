@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
-import { Modal, Button, Form, Input, Select, Checkbox, Card } from 'antd'
+import { Modal, Button, Form, Input, Select, Checkbox, Card, Icon } from 'antd'
 import ApiClient from './../../api';
 import Queries from './queries'
 import { Droppable } from './../../components/DragAndDrop'
 import FormCondicion from './forms/FormCondicion'
+import crypto from 'crypto'
 
 
 class Condiciones extends Component {
@@ -34,32 +35,7 @@ class Condiciones extends Component {
       loading: false,
       visible: false,
       dataSource: [],
-      condiciones: [
-        // {
-        //   id: 1, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 1, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 2, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 3, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 3, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 4, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 4, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 5, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 5, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 6, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 6, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 7, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 7, izquierda: '', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 8, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // },
-        // {
-        //   id: 8, izquierda: 'segundo', izquierda_tipo: '', derecha_unidad: '', izquierda_unidad: '', orden: 9, valor_si: [], valor_no: [], derecha: '', derecha_tipo: ''
-        // }
-      ]
+      condiciones: []
     }
   }
 
@@ -70,11 +46,7 @@ class Condiciones extends Component {
   }
 
   mockCondition(group=[]) {
-    let mockId = ''
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwzyx0123456789'
-    for (let i=0; i < 15; i++) {
-      mockId += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
+    const mockId = crypto.randomBytes(20).toString('hex')
 
     return {
       id: mockId,
@@ -186,19 +158,48 @@ class Condiciones extends Component {
     dataTransfer.setData('id', order)
   }
 
-  showFormula() {
+  getFormula(condiciones) {
     let formula = ''
 
-    this.condiciones.forEach(condicion => {
-      formula += `${condicion.izquierda} ${condicion.izquierda_unidad || ''} ${condicion.izquierda_tipo} `
+    condiciones.forEach(condicion => {
+      let condicionArray = [
+        condicion.izquierda,
+        condicion.izquierda_unidad || '',
+        condicion.izquierda_tipo
+      ]
+
+      if (condicion.izquierda_tipo in FormCondicion.LOGICAL_OPERATORS) {
+        Array.prototype.push.apply(condicionArray, [
+          condicion.derecha,
+          condicion.derecha_unidad || '',
+          '( ',
+          `SI (${this.getFormula(condicion.valor_si)})`,
+          `NO (${this.getFormula(condicion.valor_no)})`,
+          ' ) ',
+          condicion.derecha_tipo
+        ])
+      }
+
+      formula += condicionArray.join(' ')
     })
-    return <div><code><pre>{formula}</pre></code></div>
+
+    return formula
+  }
+
+  showFormula() {
+    const formula = this.getFormula(this.condiciones)
+
+    return <div>
+      <code>
+        <pre>{formula}</pre>
+      </code>
+    </div>
   }
 
   onClickAddButton(event) {
-    this.setState({
-      condiciones: [...this.state.condiciones, this.mockCondition(this.state.condiciones)]
-    })
+    const newCondicion = this.mockCondition(this.state.condiciones)
+    const condiciones = [...this.state.condiciones, newCondicion]
+    this.setState({ condiciones })
   }
 
   renderContentModal() {
@@ -206,16 +207,20 @@ class Condiciones extends Component {
       <Form layout="inline">
         <Droppable>
           {Boolean(this.state.condiciones.length) && this.condiciones.map((condicion, index) => {
-            return <FormCondicion
-              key={condicion.id}
-              condicion={condicion}
-              group={this.condiciones}
-              onDrop={this.onDrop.bind(this)}
-              dataSource={this.state.dataSource}
-              onSearch={this.onSearch.bind(this)}
-              onDragStart={this.onDragStart.bind(this)}
-              onFieldsChange={this.onFieldsChange.bind(this)}
+            return <React.Fragment key={condicion.id}>
+              {index !== 0 && <Icon className="icon-guide" type="arrow-right" />}
+              <FormCondicion
+                key={condicion.id}
+                condicion={condicion}
+                group={this.condiciones}
+                onDrop={this.onDrop.bind(this)}
+                dataSource={this.state.dataSource}
+                onSearch={this.onSearch.bind(this)}
+                onDragStart={this.onDragStart.bind(this)}
+                onFieldsChange={this.onFieldsChange.bind(this)}
+                onRequestNewRootCondicion={this.onClickAddButton.bind(this)}
               />
+            </React.Fragment>
           })}
         </Droppable>
         <Button type="primary" onClick={this.onClickAddButton.bind(this)} shape='circle' icon="plus" />

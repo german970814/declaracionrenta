@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import { Form, Input, Select, AutoComplete } from 'antd'
+import { Form, Input, Select, AutoComplete, Icon } from 'antd'
 import { Draggable } from './../../../components/DragAndDrop'
+import crypto from 'crypto'
 
 
 /**
@@ -17,6 +18,28 @@ import { Draggable } from './../../../components/DragAndDrop'
 
 class FormCondicion extends Component {
 
+  static WHITE = {
+    '----': '(VACÍO)'
+  }
+
+  static LOGICAL_OPERATORS = {
+    '>': 'MAYOR QUE',
+    '<': 'MENOR QUE',
+    '=': 'IGUAL QUE',
+    '>=': 'MAYOR O IGUAL QUE',
+    '<=': 'MENOR O IGUAL QUE',
+    '<>': 'DIFERENTE QUE',
+    '&&': 'Y',
+    '||': 'O'
+  }
+
+  static ARITMETIC_OPERATORS = {
+    '+': 'SUMA',
+    '*': 'MULTIPLICACIÓN',
+    '/': 'DIVISIÓN',
+    '-': 'RESTA'
+  }
+
   constructor(props) {
     super(props)
 
@@ -26,32 +49,16 @@ class FormCondicion extends Component {
       isConditional_izquierda: false
     }
 
-    this.WHITE = {
-      '----': '(VACÍO)'
-    }
+    this.WHITE = FormCondicion.WHITE
 
-    this.LOGICAL_OPERATORS = {
-      '>': 'MAYOR QUE',
-      '<': 'MENOR QUE',
-      '=': 'IGUAL QUE',
-      '>=': 'MAYOR O IGUAL QUE',
-      '<=': 'MENOR O IGUAL QUE',
-      '<>': 'DIFERENTE QUE',
-      '&&': 'Y',
-      '||': 'O'
-    }
+    this.LOGICAL_OPERATORS = FormCondicion.LOGICAL_OPERATORS
 
-    this.ARITMETIC_OPERATORS = {
-      '+': 'SUMA',
-      '*': 'MULTIPLICACIÓN',
-      '/': 'DIVISIÓN',
-      '-': 'RESTA'
-    }
+    this.ARITMETIC_OPERATORS = FormCondicion.ARITMETIC_OPERATORS
 
     this.OPCIONES_OPERADORES = {
       ...this.WHITE,
-      ...this.LOGICAL_OPERATORS,
-      ...this.ARITMETIC_OPERATORS
+      ...this.ARITMETIC_OPERATORS,
+      ...this.LOGICAL_OPERATORS
     }
 
     this.OPCIONES_UNIDADES = {
@@ -74,11 +81,7 @@ class FormCondicion extends Component {
   }
 
   mockCondition(group) {
-    let mockId = ''
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwzyx0123456789'
-    for (let i=0; i < 15; i++) {
-      mockId += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
+    const mockId = crypto.randomBytes(20).toString('hex')
 
     return {
       id: mockId,
@@ -107,6 +110,16 @@ class FormCondicion extends Component {
 
   onSelectOperator(value, param) {
     this.setState({ [`isConditional_${param}`]: value in this.LOGICAL_OPERATORS })
+    if (value in this.ARITMETIC_OPERATORS) {
+      const { group, condicion } = this.props
+      const condicionIndex = group.findIndex(cond => cond.id === condicion.id)
+
+      if ((condicionIndex + 1) && (!group[condicionIndex + 1])) {
+        console.log('deberia agregar uno nuevo')
+        this.props.onRequestNewRootCondicion ? this.props.onRequestNewRootCondicion() :
+        (this.props.onRequestNewCondicion && this.props.onRequestNewCondicion())
+      }
+    }
   }
 
   renderOperatorOptions(param, _options=null) {
@@ -155,7 +168,7 @@ class FormCondicion extends Component {
   renderOperation(izquierda=true) {
     const param = izquierda ? 'izquierda' : 'derecha'
 
-    return <div>
+    return <div className="operator">
       {this.renderValueInput(param)}
       {this.renderSelectDigitOptions(param)}
       {izquierda ? this.renderOperatorOptions(param) : this.renderOperatorOptions(param, {
@@ -189,36 +202,60 @@ class FormCondicion extends Component {
     this.props.onFieldsChange && this.props.onFieldsChange(condicion)
   }
 
+  onNewChildCondicion(attribute, newCondicion) {
+    const { condicion } = this.props
+    const condicionIndex = condicion[attribute].findIndex(cond => cond.id === newCondicion.id)
+    if (condicionIndex + 1) {
+      const condiciones = [...condicion[attribute]]
+      condiciones[condicionIndex] = newCondicion
+      const condicionCopy = {...condicion}
+      condicionCopy[attribute] = condiciones
+      this.props.onFieldsChange && this.props.onFieldsChange(condicionCopy)
+    }
+  }
+
   render() {
     const { condicion } = this.props
 
     return <Draggable
       data={condicion.orden}
       onDrop={this.props.onDrop}
-      onDragStart={(dt) => this.props.onDragStart(dt, condicion.orden)}
+      onDragStart={(dt) => this.props.onDragStart && this.props.onDragStart(dt, condicion.orden)}
     >
       {this.renderOperation(true)}
-      {this.state.isConditional_izquierda && <div>
-        {this.renderOperation(false)}
+      {this.state.isConditional_izquierda && this.renderOperation(false)}
+      {this.state.isConditional_izquierda && <div className="condicion-content">
         <p>Valor sí</p>
-        {this.orderByOrden(condicion.valor_si).map((cond, ind) => {
-          return <FormCondicionFormComponent
-            key={ind}
-            parent={this}
-            condicion={cond}
-            dataSource={this.props.dataSource}
-            onSearch={this.props.onSearch}
-          />
+        {this.orderByOrden(condicion.valor_si).map((cond, ind, array) => {
+          return <React.Fragment key={ind}>
+            <FormCondicionFormComponent
+              key={ind}
+              parent={this}
+              group={array}
+              condicion={cond}
+              onSearch={this.props.onSearch}
+              dataSource={this.props.dataSource}
+              onFieldsChange={(cd) => this.onNewChildCondicion('valor_si', cd)}
+              onRequestNewCondicion={() => this.addNewCondicion('valor_si')}
+            />
+            {((array.length > 0) && ind !== (array.length - 1)) && <Icon className="icon-guide" type="arrow-down" />}
+          </React.Fragment>
         })}
         <p>Valor no</p>
-        {this.orderByOrden(condicion.valor_no).map((cond, ind) => {
-          return <FormCondicionFormComponent
-            key={ind}
-            parent={this}
-            condicion={cond}
-            dataSource={this.props.dataSource}
-            onSearch={this.props.onSearch}
-          />
+        {this.orderByOrden(condicion.valor_no).map((cond, ind, array) => {
+          return <React.Fragment key={ind}>
+            <FormCondicionFormComponent
+              key={ind}
+              parent={this}
+              group={array}
+              condicion={cond}
+              onSearch={this.props.onSearch}
+              dataSource={this.props.dataSource}
+              onFieldsChange={(cd) => this.onNewChildCondicion('valor_no', cd)}
+              onRequestNewCondicion={() => this.addNewCondicion('valor_no')}
+            />
+            {((array.length > 0) && ind !== (array.length - 1)) && <Icon className="icon-guide" type="arrow-down" />}
+          </React.Fragment>
         })}
       </div>}
     </Draggable>
