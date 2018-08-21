@@ -44,13 +44,34 @@ class CondicionNode(DjangoObjectType):
     """ObjectType for Condicion"""
     class Meta:
         model = models.Condicion
-        filter_fields = ['tipo']
+        filter_fields = ['campo']
         interfaces = (BaseNode, )
 
 
 class CampoNodeMutation(mixins.ModelSerializerObjectType, SerializerMutation):
+    """
+    mutation ConjuntoMutation ($params: ConjuntoNodeMutationInput!) {
+        conjuntoCreateUpdate (input: $params) {
+            id
+        }
+    }
+    """
     class Meta:
         serializer_class = serializers.CampoSerializer
+        model_operations = ['create', 'update']
+        lookup_field = 'id'
+
+
+class CondicionMutation(mixins.ModelSerializerObjectType, SerializerMutation):
+    """
+    mutation CondicionMutation ($params: CondicionMutationInput!) {
+        condicionCreateUpdate (input: $params) {
+            id
+        }
+    }
+    """
+    class Meta:
+        serializer_class = serializers.CondicionSerializer
         model_operations = ['create', 'update']
         lookup_field = 'id'
 
@@ -73,11 +94,26 @@ class ConjuntoNodeMutation(mixins.ModelSerializerObjectType, SerializerMutation)
             kwargs['expand'] = ['campos'] if 'campos' in info.variable_values['params'] else []
         return kwargs
 
+    @classmethod
+    def get_expanded_fields(cls, info):
+        expanded_fields = []
+        serializer = cls._meta.serializer_class
+
+        if hasattr(serializer, 'expandable_fields'):
+            params = info.variable_values.get('params', {})
+
+            for field in params:
+                if field in serializer.expandable_fields:
+                    expanded_fields.append(field)
+            return {'expand': expanded_fields}
+        return {}
+
 
 class Query(graphene.AbstractType):
     conjunto = BaseNode.Field(ConjuntoNode)
     conjuntos = DjangoFilterConnectionField(ConjuntoNode, description=_('Todos los conjuntos'))
-    conjuntos_base = DjangoFilterConnectionField(ConjuntoNode, description=_('Todos los conjuntos base'))
+    conjuntos_base = DjangoFilterConnectionField(
+        ConjuntoNode, description=_('Todos los conjuntos base'))
 
     campo = BaseNode.Field(CampoNode)
     campos = DjangoFilterConnectionField(CampoNode)
@@ -92,3 +128,4 @@ class Mutation(graphene.AbstractType):
     # create_campo = BaseNode.Field(CampoNodeMutation)
     campo_create_update = CampoNodeMutation.Field()
     conjunto_create_update = ConjuntoNodeMutation.Field()
+    condicion_create_update = CondicionMutation.Field()

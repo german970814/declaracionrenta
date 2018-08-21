@@ -59,7 +59,10 @@ class Condicion(SerializableMixin, models.Model):
     DIVIDE = '/'
     RESTA = '-'
 
-    TIPO = (
+    PORCENTAJE = '%'
+    UVT = 'UVT'
+
+    TIPOS = (
         (MAYOR_QUE, _('Mayor que')),
         (MENOR_QUE, _('Menor que')),
         (IGUAL_QUE, _('Igual que')),
@@ -72,17 +75,27 @@ class Condicion(SerializableMixin, models.Model):
         (RESTA, _('Resta')),
     )
 
+    UNIDADES = (
+        (PORCENTAJE, PORCENTAJE),
+        (UVT, UVT),
+    )
+
     # Puede ser id, numero, porcentaje
-    izquierda = models.CharField(max_length=255, verbose_name=_('Izquierda'), blank=True)
+    izquierda = models.CharField(max_length=255, verbose_name=_('Izquierda'))
+    unidad_izquierda = models.CharField(
+        max_length=1, verbose_name=_('Unidad Izquierda'), blank=True, choices=UNIDADES)
+    tipo_izquierda = models.CharField(
+        max_length=1, verbose_name=_('Tipo Izquierda'), blank=True, choices=TIPOS)
     derecha = models.CharField(max_length=255, verbose_name=_('Derecha'), blank=True)
-    tipo = models.CharField(max_length=2, verbose_name=_('Tipo'), blank=True, choices=TIPO)
-    condiciones = models.ManyToManyField(
-        'self', verbose_name=_('Condiciones'), related_name='condiciones_set')
-    orden = models.PositiveSmallIntegerField(verbose_name=_('Orden'), blank=True, null=True)
-    uvt = models.NullBooleanField(verbose_name=_('UVT'), null=True)
-    # Puede ser id, numero, porcentaje, izquierda o derecha
-    valor_si = models.CharField(max_length=255, verbose_name=_('Valor SI'), blank=True)  
-    valor_no = models.CharField(max_length=255, verbose_name=_('Valor NO'), blank=True)
+    unidad_derecha = models.CharField(
+        max_length=1, verbose_name=_('Unidad Derecha'), blank=True, choices=UNIDADES)
+    tipo_derecha = models.CharField(
+        max_length=1, verbose_name=_('Tipo Derecha'), blank=True, choices=TIPOS)
+    orden = models.PositiveSmallIntegerField(verbose_name=_('Orden'))
+    valor_si = models.ManyToManyField(
+        'self', verbose_name=_('Valor SI'), related_name='valores_si')
+    valor_no = models.ManyToManyField(
+        'self', verbose_name=_('Valor NO'), related_name='valores_no')
     campo = models.ForeignKey(
         'main.Campo', verbose_name=_('Campo'), blank=True, null=True,
         related_name='condiciones_set', on_delete=models.CASCADE)

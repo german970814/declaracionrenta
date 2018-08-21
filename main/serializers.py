@@ -12,9 +12,14 @@ class CondicionSerializer(serializers.ModelSerializer):
         model = models.Condicion
         fields = (
             'id', 'izquierda', 'derecha',
-            'condiciones', 'orden', 'uvt',
-            'valor_si', 'valor_no', 'tipo',
+            'tipo_izquierda', 'tipo_derecha',
+            'orden', 'unidad_izquierda',
+            'unidad_derecha', 'valor_si', 'valor_no',
         )
+        extra_kwargs = {
+            'valor_si': {'required': False},
+            'valor_no': {'required': False}
+        }
 
 
 class ConjuntoSerializer(FlexFieldsModelSerializer):
