@@ -1,8 +1,12 @@
 import copy
 
+from django.db import transaction
+
 from graphql_relay import from_global_id
 
 from rest_flex_fields import FlexFieldsModelSerializer as FlexFieldSerializer
+
+from rest_framework.utils import model_meta
 
 
 class FlexFieldsModelSerializer(FlexFieldSerializer):
@@ -50,3 +54,79 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
         if 'id' in data:
             __, id = from_global_id(data)
         return id
+
+    def create(self, validated_data):
+        # importante, no hay soporte para crear un nuevo modelo en ForeingKey
+        # si o sí debe venir con el id incluido
+        info = model_meta.get_field_info(self.Meta.model)
+        many_to_many = [x for x in info.relations if info.relations[x].to_many]
+
+        with transaction.atomic():
+            if all([x not in many_to_many for x in self.expanded_fields]):
+                # Si no hay many to many fields
+                instance = super().create(validated_data)
+            else:
+                relations = {field: validated_data.get(field) for field in validated_data if field in many_to_many}
+                [validated_data.pop(relation) for relation in relations]
+                instance = self.Meta.model.objects.create(**validated_data)
+
+                for field in relations:
+                    if field in self.expanded_fields:
+                        serializer_class = self._import_serializer_class(
+                            self.expandable_fields[field][0])
+                        model_field = serializer_class.Meta.model
+                        instances = []
+                        
+                        for data in relations[field]:
+                            relation_instance = None
+                            if 'id' in data:
+                                relation_instance = model_field.objects.get(id=data.get('id'))
+                            serializer = serializer_class(data=data, instance=relation_instance)
+                            serializer.is_valid()
+                            instances.append(serializer.save())
+                        getattr(instance, field).set(instances)
+                    else:
+                        pass
+        return instance
+
+    def update(self, instance, validated_data):
+        default_kwargs_data = {
+            'campos': {
+                'conjunto': instance.id if instance else None
+            }
+        }
+
+        info = model_meta.get_field_info(self.Meta.model)
+        many_to_many = [x for x in info.relations if info.relations[x].to_many]
+
+        with transaction.atomic():
+            kwargs = {}
+            for field in self.expanded_fields:
+                if field in many_to_many:
+                    instances = []
+                    data_field = self.data.get(field)
+                    validated_data_field = validated_data.get(field)
+
+                    if validated_data_field:
+                        serializer_class = self._import_serializer_class(
+                            self.expandable_fields[field][0])
+                        model_field = serializer_class.Meta.model
+
+                        for index, data in enumerate(validated_data_field):
+                            data_instance = None
+                            if (len(data_field) - 1) >= index and 'id' in data_field[index]:
+                                data_instance = model_field.objects.get(id=data_field[index].get('id'))
+                            elif field in default_kwargs_data:
+                                data.update(default_kwargs_data[field])  # esto puede ser redundante
+                            serializer = serializer_class(
+                                instance=data_instance, data=data)
+                            serializer.is_valid()
+                            instances.append(serializer.save())
+                        getattr(instance, field).set(instances)
+
+            for field in validated_data:
+                if field in self.expanded_fields:
+                    continue
+                kwargs[field] = validated_data[field]
+            instance.update(**kwargs)
+        return instance

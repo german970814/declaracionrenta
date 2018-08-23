@@ -9,9 +9,9 @@ import crypto from 'crypto'
  *
  * {
  *   id: 1, orden: 1,
- *   izquierda: '', tipo_izquierda: '', unidad_izquierda: '',
- *   derecha: '', tipo_derecha: '', unidad_derecha: '',
- *   valor_si: [], valor_no: []
+ *   izquierda: '', tipoIzquierda: '', unidadIzquierda: '',
+ *   derecha: '', tipoDerecha: '', unidadDerecha: '',
+ *   valorSi: [], valorNo: []
  * }, 
  *
  */
@@ -71,11 +71,11 @@ class FormCondicion extends Component {
   componentDidMount() {
     const { condicion } = this.props
     if (condicion) {
-      if (!condicion.valor_si.length) {
-        this.addNewCondicion('valor_si')
+      if (!condicion.valorSi.length) {
+        this.addNewCondicion('valorSi')
       }
-      if (!condicion.valor_no.length) {
-        this.addNewCondicion('valor_no')
+      if (!condicion.valorNo.length) {
+        this.addNewCondicion('valorNo')
       }
     }
   }
@@ -87,13 +87,13 @@ class FormCondicion extends Component {
       id: mockId,
       orden: group.length + 1,
       izquierda: '',
-      izquierda_tipo: '',
-      izquierda_unidad: '',
+      tipoIzquierda: '',
+      unidadIzquierda: '',
       derecha: '',
-      derecha_tipo: '',
-      derecha_unidad: '',
-      valor_si: [],
-      valor_no: []
+      tipoDerecha: '',
+      unidadDerecha: '',
+      valorSi: [],
+      valorNo: []
     }
   }
 
@@ -134,9 +134,10 @@ class FormCondicion extends Component {
     const options = (_options ? _options : (canCreateCondicionales ? this.OPCIONES_OPERADORES : {
       ...this.WHITE, ...this.ARITMETIC_OPERATORS
     }))
+    const paramTitleCase = param.charAt(0).toUpperCase() + param.substr(1).toLowerCase()
 
     return <Form.Item>
-      {getFieldDecorator(`${param}_tipo`, { initialValue: condicion[`${param}_tipo`] })(
+      {getFieldDecorator(`tipo${paramTitleCase}`, { initialValue: condicion[`tipo${paramTitleCase}`] })(
         <Select style={{ width: this.isNumeric(param) ? 75 : 150 }} onSelect={(val) => this.onSelectOperator(val, param)}>
           {Object.keys(options).map(key => {
             return <Select.Option key={key} value={key}>{`${key}`}</Select.Option>
@@ -182,9 +183,10 @@ class FormCondicion extends Component {
     if (this.isNumeric(param)) {
       const { getFieldDecorator } = this.props.form
       const options = this.OPCIONES_UNIDADES
+      const paramTitleCase = param.charAt(0).toUpperCase() + param.substr(1).toLowerCase()
 
       return <Form.Item>
-        {getFieldDecorator(`${param}_unidad`, { initialValue: condicion[`${param}_unidad`] })(
+        {getFieldDecorator(`unidad${paramTitleCase}`, { initialValue: condicion[`unidad${paramTitleCase}`] })(
           <Select style={{ width: 75 }}>
             {Object.keys(options).map(key => {
               return <Select.Option key={key} value={key}>{`${key}`}</Select.Option>
@@ -226,7 +228,7 @@ class FormCondicion extends Component {
       {this.state.isConditional_izquierda && this.renderOperation(false)}
       {this.state.isConditional_izquierda && <div className="condicion-content">
         <p>Valor sí</p>
-        {this.orderByOrden(condicion.valor_si).map((cond, ind, array) => {
+        {this.orderByOrden(condicion.valorSi).map((cond, ind, array) => {
           return <React.Fragment key={ind}>
             <FormCondicionFormComponent
               key={ind}
@@ -235,14 +237,14 @@ class FormCondicion extends Component {
               condicion={cond}
               onSearch={this.props.onSearch}
               dataSource={this.props.dataSource}
-              onFieldsChange={(cd) => this.onNewChildCondicion('valor_si', cd)}
-              onRequestNewCondicion={() => this.addNewCondicion('valor_si')}
+              onFieldsChange={(cd) => this.onNewChildCondicion('valorSi', cd)}
+              onRequestNewCondicion={() => this.addNewCondicion('valorSi')}
             />
             {((array.length > 0) && ind !== (array.length - 1)) && <Icon className="icon-guide" type="arrow-down" />}
           </React.Fragment>
         })}
         <p>Valor no</p>
-        {this.orderByOrden(condicion.valor_no).map((cond, ind, array) => {
+        {this.orderByOrden(condicion.valorNo).map((cond, ind, array) => {
           return <React.Fragment key={ind}>
             <FormCondicionFormComponent
               key={ind}
@@ -251,8 +253,8 @@ class FormCondicion extends Component {
               condicion={cond}
               onSearch={this.props.onSearch}
               dataSource={this.props.dataSource}
-              onFieldsChange={(cd) => this.onNewChildCondicion('valor_no', cd)}
-              onRequestNewCondicion={() => this.addNewCondicion('valor_no')}
+              onFieldsChange={(cd) => this.onNewChildCondicion('valorNo', cd)}
+              onRequestNewCondicion={() => this.addNewCondicion('valorNo')}
             />
             {((array.length > 0) && ind !== (array.length - 1)) && <Icon className="icon-guide" type="arrow-down" />}
           </React.Fragment>

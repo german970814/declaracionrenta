@@ -4,6 +4,7 @@ import ApiClient from './../../api';
 import Queries from './queries'
 import { Droppable } from './../../components/DragAndDrop'
 import FormCondicion from './forms/FormCondicion'
+import { unRelay } from './../../utils'
 import crypto from 'crypto'
 
 
@@ -41,8 +42,26 @@ class Condiciones extends Component {
 
   componentDidMount() {
     if (!Boolean(this.state.condiciones.length)) {
-      this.setState({ condiciones: [this.mockCondition()] })
+      // this.setState({ condiciones: [this.mockCondition()] })
+      this.getCondiciones()
     }
+  }
+
+  normalizeQueryForCondiciones(condiciones) {
+    return unRelay(condiciones)
+  }
+
+  getCondiciones() {
+    ApiClient.graphql(Queries.getCondicionesByConjuntoId(this.props.model.id)).then(response => {
+    // ApiClient.graphql(Queries.getCondicionesByConjuntoId('Q29uanVudG9Ob2RlOjE2')).then(response => {
+      const { data } = response
+      if (data && data.condiciones && data.condiciones.edges.length) {
+        const condiciones = this.normalizeQueryForCondiciones(data.condiciones.edges)
+        this.setState({ condiciones })
+      } else {
+        this.setState({ condiciones: [this.mockCondition()] })
+      }
+    })
   }
 
   mockCondition(group=[]) {
@@ -52,13 +71,13 @@ class Condiciones extends Component {
       id: mockId,
       orden: group.length + 1,
       izquierda: '',
-      izquierda_tipo: '',
-      izquierda_unidad: '',
+      tipoIzquierda: '',
+      unidadIzquierda: '',
       derecha: '',
-      derecha_tipo: '',
-      derecha_unidad: '',
-      valor_si: [],
-      valor_no: []
+      tipoDerecha: '',
+      unidadDerecha: '',
+      valorSi: [],
+      valorNo: []
     }
   }
 
@@ -164,19 +183,19 @@ class Condiciones extends Component {
     condiciones.forEach(condicion => {
       let condicionArray = [
         condicion.izquierda,
-        condicion.izquierda_unidad || '',
-        condicion.izquierda_tipo
+        condicion.unidadIzquierda || '',
+        condicion.tipoIzquierda
       ]
 
-      if (condicion.izquierda_tipo in FormCondicion.LOGICAL_OPERATORS) {
+      if (condicion.tipoIzquierda in FormCondicion.LOGICAL_OPERATORS) {
         Array.prototype.push.apply(condicionArray, [
           condicion.derecha,
-          condicion.derecha_unidad || '',
+          condicion.unidadDerecha || '',
           '( ',
-          `SI (${this.getFormula(condicion.valor_si)})`,
-          `NO (${this.getFormula(condicion.valor_no)})`,
+          `SI (${this.getFormula(condicion.valorSi)})`,
+          `NO (${this.getFormula(condicion.valorNo)})`,
           ' ) ',
-          condicion.derecha_tipo
+          condicion.tipoDerecha
         ])
       }
 

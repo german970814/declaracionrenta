@@ -1,7 +1,5 @@
 from rest_framework import serializers
 
-from django.db import transaction
-
 from . import models
 from .mixins import FlexFieldsModelSerializer, PrimaryKeyRelatedFieldGraphQl
 
@@ -33,10 +31,11 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
             'id', 'parent', 'descripcion',
             'nombre', 'identificador', 'repetible',
             'requisitos', 'automatico', 'children_set',
-            'campos',
+            'campos', 'condiciones_set'
         )
         extra_kwargs = {
             'children_set': {'required': False},
+            'condiciones_set': {'required': False},
             'campos': {'required': False},
             'parent': {'required': False}
         }
@@ -49,47 +48,12 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
         'children_set': ('main.ConjuntoSerializer', {
             'source': 'children_set', 'many': True,
             'expand': 'children_set'
+        }),
+        'condiciones_set': ('main.CondicionSerializer', {
+            'source': 'condiciones_set', 'many': True,
+            'required': False
         })
     }
-
-    def update(self, instance, validated_data):
-        pop_data = ['campos', 'children_set']
-        default_kwargs_data = {
-            'campos': {
-                'conjunto': instance.id if instance else None
-            }
-        }
-
-        with transaction.atomic():
-            kwargs = {}
-            for field in pop_data:
-                instances = []
-                data_field = self.data.get(field)
-                validated_data_field = validated_data.get(field)
-
-                if validated_data_field and field in self.expanded_fields:
-                    serializer_class = self._import_serializer_class(
-                        self.expandable_fields[field][0])
-                    model_field = serializer_class.Meta.model
-
-                    for index, data in enumerate(validated_data_field):
-                        data_instance = None
-                        if (len(data_field) - 1) >= index and 'id' in data_field[index]:
-                            data_instance = model_field.objects.get(id=data_field[index].get('id'))
-                        elif field in default_kwargs_data:
-                            data.update(default_kwargs_data[field])
-                        serializer = serializer_class(
-                            instance=data_instance, data=data)
-                        serializer.is_valid()
-                        instances.append(serializer.save())
-                    getattr(instance, field).set(instances)
-
-            for field in validated_data:
-                if field in pop_data and field in self.expanded_fields:
-                    continue
-                kwargs[field] = validated_data[field]
-            instance.update(**kwargs)
-        return instance
 
 
 class CampoSerializer(FlexFieldsModelSerializer):
