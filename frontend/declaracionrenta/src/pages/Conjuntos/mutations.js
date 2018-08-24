@@ -11,6 +11,8 @@ const mutate = (name, input, options) => {
     "params": ${JSONInput}
   }`
 
+  console.log(JSONInput)
+
   return [_query, variables, name.toUpperCase()]
 }
 

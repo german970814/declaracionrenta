@@ -93,7 +93,8 @@ class FormCondicion extends Component {
       tipoDerecha: '',
       unidadDerecha: '',
       valorSi: [],
-      valorNo: []
+      valorNo: [],
+      new: true
     }
   }
 

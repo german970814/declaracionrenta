@@ -4,7 +4,7 @@ from . import models
 from .mixins import FlexFieldsModelSerializer, PrimaryKeyRelatedFieldGraphQl
 
 
-class CondicionSerializer(serializers.ModelSerializer):
+class CondicionSerializer(FlexFieldsModelSerializer):
     """Serializer de condiciones"""
     class Meta:
         model = models.Condicion
@@ -18,6 +18,22 @@ class CondicionSerializer(serializers.ModelSerializer):
             'valor_si': {'required': False},
             'valor_no': {'required': False}
         }
+
+    expandable_fields = {
+        'valor_si': ('main.CondicionSerializer', {
+            'source': 'valor_si', 'many': True,
+            'required': False
+        }),
+        'valor_no': ('main.CondicionSerializer', {
+            'source': 'valor_no', 'many': True,
+            'required': False
+        }),
+    }
+
+    def __init__(self, *args, **kwargs):
+        depth = kwargs.pop('depth', 3)
+        kwargs['depth'] = depth
+        super().__init__(*args, **kwargs)
 
 
 class ConjuntoSerializer(FlexFieldsModelSerializer):
@@ -51,7 +67,7 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
         }),
         'condiciones_set': ('main.CondicionSerializer', {
             'source': 'condiciones_set', 'many': True,
-            'required': False
+            'required': False, 'expand': ['valor_si', 'valor_no']
         })
     }
 

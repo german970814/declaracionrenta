@@ -68,6 +68,10 @@ class CondicionMutation(mixins.ModelSerializerObjectType, SerializerMutation):
         model_operations = ['create', 'update']
         lookup_field = 'id'
 
+    @classmethod
+    def get_initial_serializer_kwargs(cls):
+        return {'expand': ['valor_si', 'valor_no']}
+
 
 class ConjuntoNodeMutation(mixins.ModelSerializerObjectType, SerializerMutation):
     """

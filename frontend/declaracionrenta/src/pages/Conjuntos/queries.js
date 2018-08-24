@@ -27,24 +27,24 @@ const CONJUNTO = `
   descripcion, repetible, requisitos, automatico
 `
 
-const _CONDICION_BASE = `
+const CONDICION_BASE = `
   id, izquierda, unidadIzquierda, tipoIzquierda,
   derecha, unidadDerecha, tipoDerecha
 `
 
 const CONDICION_CON_RELAY = `
-  ${_CONDICION_BASE},
+  ${CONDICION_BASE},
   valorSi { ${pluralizeQuery(`
     id, izquierda, unidadIzquierda, tipoIzquierda,
     derecha, unidadDerecha, tipoDerecha,
-    valorSi { ${pluralizeQuery(_CONDICION_BASE)} },
-    valorNo { ${pluralizeQuery(_CONDICION_BASE)} }
+    valorSi { ${pluralizeQuery(CONDICION_BASE)} },
+    valorNo { ${pluralizeQuery(CONDICION_BASE)} }
   `)} },
   valorNo { ${pluralizeQuery(`
     id, izquierda, unidadIzquierda, tipoIzquierda,
     derecha, unidadDerecha, tipoDerecha,
-    valorSi { ${pluralizeQuery(_CONDICION_BASE)} },
-    valorNo { ${pluralizeQuery(_CONDICION_BASE)} }
+    valorSi { ${pluralizeQuery(CONDICION_BASE)} },
+    valorNo { ${pluralizeQuery(CONDICION_BASE)} }
   `)} }
 `
 
@@ -87,6 +87,6 @@ export default {
   CAMPO, CONJUNTOS, CONJUNTOS_CON_CHILDREN,
   CONJUNTO_CON_CHILDREN, CONJUNTO,
   CONJUNTO_SIN_RELAY, IDENTIFICADOR_SEARCH,
-  CONJUNTOS_CONDICIONES,
+  CONJUNTOS_CONDICIONES, CONDICION_BASE,
   CONJUNTOS_BASE, ...functions
 }

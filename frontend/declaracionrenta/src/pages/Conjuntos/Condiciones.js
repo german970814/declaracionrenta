@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import { Modal, Button, Form, Input, Select, Checkbox, Card, Icon } from 'antd'
+import { Modal, Button, Form, Card, Icon } from 'antd'
 import ApiClient from './../../api';
+import mutate from './mutations'
 import Queries from './queries'
 import { Droppable } from './../../components/DragAndDrop'
 import FormCondicion from './forms/FormCondicion'
@@ -42,7 +43,6 @@ class Condiciones extends Component {
 
   componentDidMount() {
     if (!Boolean(this.state.condiciones.length)) {
-      // this.setState({ condiciones: [this.mockCondition()] })
       this.getCondiciones()
     }
   }
@@ -66,7 +66,6 @@ class Condiciones extends Component {
 
   mockCondition(group=[]) {
     const mockId = crypto.randomBytes(20).toString('hex')
-
     return {
       id: mockId,
       orden: group.length + 1,
@@ -77,7 +76,8 @@ class Condiciones extends Component {
       tipoDerecha: '',
       unidadDerecha: '',
       valorSi: [],
-      valorNo: []
+      valorNo: [],
+      new: true
     }
   }
 
@@ -96,52 +96,44 @@ class Condiciones extends Component {
     }
   }
 
-  handleInputChange(event) {
-    const target = event.target;
-    this.setState({
-      [target.name]: Object.assign(this.state[target.name], {
-          value: target.type === 'checkbox' ? target.checked : target.value
-      })
-    })
-    // this.validate(this.state[target.name]);
-    this.state[target.name].onChange && this.state[target.name].onChange(
-      this.state[target.name].value, this.state[target.name]
-    );
-  }
-
   showModal() {
     this.setState({ visible: true })
   }
 
-  handleOk() {
+  prepareCondiciones(condiciones) {
+    if (!condiciones.length) return []
 
+    return [...condiciones].map((condicion) => {
+      const newCondicion = {...condicion}
+      if (newCondicion.new) {
+        delete newCondicion['id']
+        delete newCondicion['new']
+      }
+      newCondicion.valorSi = this.prepareCondiciones(newCondicion.valorSi)
+      newCondicion.valorNo = this.prepareCondiciones(newCondicion.valorNo)
+      return newCondicion
+    })
+  }
+
+  handleOk() {  // TODO: Cuando agregas un campo, por defecto viene con el valorSi y valorNo seteados
+    const mutationName = 'conjuntoCreateUpdate'
+    const condiciones = this.prepareCondiciones(this.condiciones)
+    const payload = {
+      id: this.props.model.id,
+      identificador: this.props.model.identificador,
+      condicionesSet: condiciones
+    }
+    ApiClient.graphql(...mutate(mutationName, payload, {
+      type: 'ConjuntoNodeMutationInput',
+      query: `condicionesSet { ${Queries.CONDICION_BASE} } `
+    })).then(data => {
+      console.log('in')
+      console.log(data)
+    })
   }
 
   handleCancel() {
     this.setState({ visible: false })
-  }
-
-  renderField(field, props={}) {
-    switch (field.type) {
-      case 'checkbox':
-        return <Checkbox {...props}>{field.placeholder || ''}</Checkbox>
-      case 'textarea':
-        return <Input.TextArea rows={4} {...props} />
-      default:
-        return <Input placeholder={field.placeholder || ''} {...props} />
-    }
-  }
-
-  renderSelectOpciones(condicion, izquierda=true) {
-    const { getFieldDecorator } = this.props.form
-    const options = izquierda ? this.OPCIONES_IZQUIERDA : this.OPCIONES_DERECHA
-    return getFieldDecorator(`type-${condicion}`, { initialValue: '' })(
-      <Select style={{ width: 150 }}>
-        {Object.keys(options).map(key => {
-          return <Select.Option key={key} value={key}>{`(${key}) ${options[key]}`}</Select.Option>
-        })}
-      </Select>
-    )
   }
 
   onSearch(value) {
