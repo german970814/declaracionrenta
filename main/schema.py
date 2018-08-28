@@ -70,7 +70,7 @@ class CondicionMutation(mixins.ModelSerializerObjectType, SerializerMutation):
 
     @classmethod
     def get_initial_serializer_kwargs(cls):
-        return {'expand': ['valor_si', 'valor_no']}
+        return {'expand': []}
 
 
 class ConjuntoNodeMutation(mixins.ModelSerializerObjectType, SerializerMutation):

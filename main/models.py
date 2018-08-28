@@ -58,11 +58,12 @@ class Condicion(SerializableMixin, models.Model):
     MULTIPLICA = '*'
     DIVIDE = '/'
     RESTA = '-'
+    VOID = '_vod'
 
     PORCENTAJE = '%'
     UVT = 'UVT'
 
-    TIPOS = (
+    TIPOS = (  # orden importante, si se cambia, cambiar en el front
         (MAYOR_QUE, _('Mayor que')),
         (MENOR_QUE, _('Menor que')),
         (IGUAL_QUE, _('Igual que')),
@@ -73,24 +74,26 @@ class Condicion(SerializableMixin, models.Model):
         (MULTIPLICA, _('Multiplicación')),
         (DIVIDE, _('División')),
         (RESTA, _('Resta')),
+        (VOID, _('Void')),
     )
 
     UNIDADES = (
         (PORCENTAJE, PORCENTAJE),
         (UVT, UVT),
+        (VOID, _('Void')),
     )
 
     # Puede ser id, numero, porcentaje
-    izquierda = models.CharField(max_length=255, verbose_name=_('Izquierda'))
+    izquierda = models.CharField(max_length=255, verbose_name=_('Izquierda'), blank=True)
     unidad_izquierda = models.CharField(
-        max_length=1, verbose_name=_('Unidad Izquierda'), blank=True, choices=UNIDADES)
+        max_length=10, verbose_name=_('Unidad Izquierda'), blank=True, choices=UNIDADES)
     tipo_izquierda = models.CharField(
-        max_length=1, verbose_name=_('Tipo Izquierda'), blank=True, choices=TIPOS)
+        max_length=10, verbose_name=_('Tipo Izquierda'), blank=True, choices=TIPOS)
     derecha = models.CharField(max_length=255, verbose_name=_('Derecha'), blank=True)
     unidad_derecha = models.CharField(
-        max_length=1, verbose_name=_('Unidad Derecha'), blank=True, choices=UNIDADES)
+        max_length=10, verbose_name=_('Unidad Derecha'), blank=True, choices=UNIDADES)
     tipo_derecha = models.CharField(
-        max_length=1, verbose_name=_('Tipo Derecha'), blank=True, choices=TIPOS)
+        max_length=10, verbose_name=_('Tipo Derecha'), blank=True, choices=TIPOS)
     orden = models.PositiveSmallIntegerField(verbose_name=_('Orden'))
     valor_si = models.ManyToManyField(
         'self', verbose_name=_('Valor SI'), related_name='valores_si')

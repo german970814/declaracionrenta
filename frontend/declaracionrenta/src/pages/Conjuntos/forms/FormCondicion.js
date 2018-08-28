@@ -70,6 +70,7 @@ class FormCondicion extends Component {
 
   componentDidMount() {
     const { condicion } = this.props
+    this.setState({ isConditional_izquierda: condicion.tipoIzquierda in this.LOGICAL_OPERATORS })
     if (condicion) {
       if (!condicion.valorSi.length) {
         this.addNewCondicion('valorSi')

@@ -1,6 +1,7 @@
 import copy
 
 from django.db import transaction
+from django.utils.module_loading import import_string
 
 from graphql_relay import from_global_id
 
@@ -14,6 +15,24 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
     def __init__(self, *args, **kwargs):
         self.depth = kwargs.pop('depth', None)
         super().__init__(*args, **kwargs)
+
+    @classmethod
+    def get_related_schema_class(cls):
+        """Singleton para retornar el schema de la clase"""
+        schema_class = getattr(cls, '_schema_class', None)
+        if not schema_class and hasattr(cls, 'SCHEMA_CLASS'):
+            cls._schema_class = schema_class = import_string(cls.SCHEMA_CLASS)
+        return schema_class
+
+    @classmethod
+    def get_expanded_fields(cls, data):
+        expanded_fields = []
+
+        if hasattr(cls, 'expandable_fields'):
+            for field in data:
+                if field in cls.expandable_fields:
+                    expanded_fields.append(field)
+        return expanded_fields
 
     def _make_expanded_field_serializer(self, name, nested_expands, nested_includes):
         """
@@ -52,7 +71,7 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
         data = data or self.data
         id = None
         if 'id' in data:
-            __, id = from_global_id(data)
+            __, id = from_global_id(data.get('id'))
         return id
 
     def create(self, validated_data):
@@ -82,8 +101,8 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
                             if 'id' in data:
                                 relation_instance = model_field.objects.get(id=data.get('id'))
                             serializer = serializer_class(data=data, instance=relation_instance)
-                            serializer.is_valid()
-                            instances.append(serializer.save())
+                            if serializer.is_valid():
+                                instances.append(serializer.save())
                         getattr(instance, field).set(instances)
                     else:
                         pass
@@ -118,10 +137,15 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
                                 data_instance = model_field.objects.get(id=data_field[index].get('id'))
                             elif field in default_kwargs_data:
                                 data.update(default_kwargs_data[field])  # esto puede ser redundante
+
+                            expanded_fields = serializer_class.get_expanded_fields(data)
                             serializer = serializer_class(
-                                instance=data_instance, data=data)
-                            serializer.is_valid()
-                            instances.append(serializer.save())
+                                instance=data_instance, data=data, expand=expanded_fields)
+
+                            if serializer.is_valid():
+                                instances.append(serializer.save())
+                            else:
+                                print(serializer.errors)
                         getattr(instance, field).set(instances)
 
             for field in validated_data:

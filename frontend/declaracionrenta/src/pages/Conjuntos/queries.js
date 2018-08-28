@@ -29,20 +29,20 @@ const CONJUNTO = `
 
 const CONDICION_BASE = `
   id, izquierda, unidadIzquierda, tipoIzquierda,
-  derecha, unidadDerecha, tipoDerecha
+  derecha, unidadDerecha, tipoDerecha, orden
 `
 
 const CONDICION_CON_RELAY = `
   ${CONDICION_BASE},
   valorSi { ${pluralizeQuery(`
     id, izquierda, unidadIzquierda, tipoIzquierda,
-    derecha, unidadDerecha, tipoDerecha,
+    derecha, unidadDerecha, tipoDerecha, orden,
     valorSi { ${pluralizeQuery(CONDICION_BASE)} },
     valorNo { ${pluralizeQuery(CONDICION_BASE)} }
   `)} },
   valorNo { ${pluralizeQuery(`
     id, izquierda, unidadIzquierda, tipoIzquierda,
-    derecha, unidadDerecha, tipoDerecha,
+    derecha, unidadDerecha, tipoDerecha, orden,
     valorSi { ${pluralizeQuery(CONDICION_BASE)} },
     valorNo { ${pluralizeQuery(CONDICION_BASE)} }
   `)} }

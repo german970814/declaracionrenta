@@ -1,5 +1,6 @@
 
 export default class Client {
+  static API_PREFIX = 'api'
   static base_url = process.env.REACT_APP_API_URL;
   static client = window.fetch.bind(window);
 
@@ -39,7 +40,32 @@ export default class Client {
     }
 
     return Client.client(`${Client.base_url}/graphql`, { ...payload }).then(response => {
-      return response.json();
+      return response.json()
     });
+  }
+
+  /**
+   * 
+   * @param {String} module Module name, base request
+   * @param {String} path Path to api
+   * @param {Object} body Body object with data
+   * @param {Object} headers Headers object to send to server
+   */
+  static post(module, path, body, headers={}) {
+    body = JSON.stringify(body);
+    headers = Object.assign(headers, { 'Content-Type': 'application/json' });
+
+    const payload = {
+      // credentials: 'include',
+      method: 'POST',
+      headers, body
+    }
+
+    return Client.client(
+      `${Client.base_url}/${module}/${Client.API_PREFIX}/${path}/`,
+      { ...payload }
+    ).then(response => {
+      return response.json()
+    })
   }
 }

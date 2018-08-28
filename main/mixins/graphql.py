@@ -144,9 +144,9 @@ def convert_django_field_with_choices(field, registry=None):
             return converted
     choices = getattr(field, "choices", None)
     if choices:
-        meta = field.model._meta
+        meta = field.model._meta  # revisar esto
         name = to_camel_case("{}_{}".format(meta.object_name, field.name))
-        choices = list(get_choices(choices))
+        choices = list([('_vod', '', '',)]) + list(get_choices(choices))
         named_choices = [(c[0], c[1]) for c in choices]
         named_choices_descriptions = {c[0]: c[2] for c in choices}
 

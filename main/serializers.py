@@ -6,6 +6,9 @@ from .mixins import FlexFieldsModelSerializer, PrimaryKeyRelatedFieldGraphQl
 
 class CondicionSerializer(FlexFieldsModelSerializer):
     """Serializer de condiciones"""
+
+    SCHEMA_CLASS = 'main.schema.CondicionMutation'
+
     class Meta:
         model = models.Condicion
         fields = (
@@ -16,17 +19,23 @@ class CondicionSerializer(FlexFieldsModelSerializer):
         )
         extra_kwargs = {
             'valor_si': {'required': False},
-            'valor_no': {'required': False}
+            'valor_no': {'required': False},
+            'tipo_derecha': {'required': False},
+            'tipo_izquierda': {'required': False},
+            'unidad_derecha': {'required': False},
+            'unidad_izquierda': {'required': False}
         }
 
     expandable_fields = {
         'valor_si': ('main.CondicionSerializer', {
             'source': 'valor_si', 'many': True,
-            'required': False
+            'required': False, 'expand': ['valor_si', 'valor_no'],
+            'depth': 1
         }),
         'valor_no': ('main.CondicionSerializer', {
             'source': 'valor_no', 'many': True,
-            'required': False
+            'required': False, 'expand': ['valor_si', 'valor_no'],
+            'depth': 1
         }),
     }
 
@@ -35,9 +44,24 @@ class CondicionSerializer(FlexFieldsModelSerializer):
         kwargs['depth'] = depth
         super().__init__(*args, **kwargs)
 
+    def validate_tipo_derecha(self, value):
+        return value.replace('_vod', '')
+
+    def validate_tipo_izquierda(self, value):
+        return value.replace('_vod', '')
+
+    def validate_unidad_derecha(self, value):
+        return value.replace('_vod', '')
+
+    def validate_unidad_izquierda(self, value):
+        return value.replace('_vod', '')
+
 
 class ConjuntoSerializer(FlexFieldsModelSerializer):
     """Serializer de conjuntos"""
+
+    SCHEMA_CLASS = 'main.schema.ConjuntoMutation'
+
     parent = PrimaryKeyRelatedFieldGraphQl(
         queryset=models.Conjunto.objects.all(), required=False)
 
@@ -67,7 +91,8 @@ class ConjuntoSerializer(FlexFieldsModelSerializer):
         }),
         'condiciones_set': ('main.CondicionSerializer', {
             'source': 'condiciones_set', 'many': True,
-            'required': False, 'expand': ['valor_si', 'valor_no']
+            'required': False, 'expand': ['valor_si', 'valor_no'],
+            'depth': 3
         })
     }
 

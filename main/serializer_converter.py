@@ -56,8 +56,12 @@ def convert_serializer_field(field, is_input=True):
     return graphql_type(*args, **kwargs)
 
 
-def convert_serializer_to_input_type(serializer_class):
-    serializer = serializer_class()
+def convert_serializer_to_input_type(serializer_class, **kwargs):
+    schema_class = serializer_class.get_related_schema_class()
+    kwargs = kwargs or {}
+    if schema_class:
+        kwargs.update(schema_class.get_initial_serializer_kwargs())
+    serializer = serializer_class(**kwargs)
 
     items = {
         name: convert_serializer_field(field)
