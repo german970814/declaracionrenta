@@ -139,8 +139,9 @@ class FormConjunto extends Component {
         let extra = field.help || ''
 
         if (
-          ('helpWithValue' in field) && (getFieldValue(key) ||
-          (this.props.conjunto && (key in this.props.conjunto) && this.props.conjunto[key]))
+          ('helpWithValue' in field) && ((getFieldValue(key) === undefined &&
+          (this.props.conjunto && (key in this.props.conjunto) && this.props.conjunto[key])) ||
+          getFieldValue(key))
         ) {
           extra = field.helpWithValue(() => {
             this.props.onAutomaticoChange(true)
@@ -171,7 +172,13 @@ class FormConjunto extends Component {
 export default Form.create({
   onFieldsChange: (props, changedValues, allValues) => {
     if ('automatico' in changedValues) {
-      props.onAutomaticoChange && props.onAutomaticoChange(changedValues.automatico.value)
+      let automatic = window.sessionStorage.getItem('automatic')
+      if (automatic === null) {
+        automatic = props.conjunto.automatico ? 1 : 0
+      }
+      automatic = parseInt(automatic, 10)
+      props.onAutomaticoChange && props.onAutomaticoChange(changedValues.automatico.value, !Boolean(automatic))
+      window.sessionStorage.setItem('automatic', automatic ? 1 : 0)
     }
     props.onFieldsChange && props.onFieldsChange('formConjuntoError', changedValues, allValues)
   }

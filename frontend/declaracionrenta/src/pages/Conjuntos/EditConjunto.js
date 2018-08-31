@@ -10,11 +10,12 @@ class EditConjunto extends Component {
   constructor(props) {
     super(props)
 
+    const conjunto = props.conjunto || {}
     this.state = {
       visible: false,
-      conjunto: props.conjunto || {},
+      conjunto: conjunto,
       buttonLoading: false,
-      showTabCampos: true
+      showTabCampos: conjunto.automatico || false
     }
 
     this.condicionesModal = React.createRef()
@@ -22,7 +23,10 @@ class EditConjunto extends Component {
 
   componentDidUpdate(prevProps) {
     if (prevProps.conjunto !== this.props.conjunto) {
-      this.setState({ conjunto: this.props.conjunto })
+      this.setState({
+        conjunto: this.props.conjunto,
+        showTabCampos: !this.props.conjunto.automatico || false
+      })
     }
 
     if ((prevProps.conjunto && this.props.conjunto) &&
@@ -133,9 +137,9 @@ class EditConjunto extends Component {
     this.props.onConjuntoUpdate && this.props.onConjuntoUpdate(this.state.conjunto.id)
   }
 
-  onAutomaticoConjuntoChange(value) {
+  onAutomaticoConjuntoChange(value, modal=true) {
     this.setState({ showTabCampos: !value })
-    if (this.condicionesModal.current && value) {
+    if (this.condicionesModal.current && value && modal) {
       this.condicionesModal.current.showModal()
     }
   }

@@ -36,7 +36,7 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
 
     def _make_expanded_field_serializer(self, name, nested_expands, nested_includes):
         """
-        Returns an instance of the dynamically created nested serializer. 
+        Returns an instance of the dynamically created nested serializer.
         """
         field_options = self.expandable_fields[name]
         serializer_class = field_options[0]
@@ -75,6 +75,7 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
         return id
 
     def create(self, validated_data):
+        # TODO
         # importante, no hay soporte para crear un nuevo modelo en ForeingKey
         # si o sí debe venir con el id incluido
         info = model_meta.get_field_info(self.Meta.model)
@@ -95,15 +96,25 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
                             self.expandable_fields[field][0])
                         model_field = serializer_class.Meta.model
                         instances = []
-                        
+
+                        assert isinstance(relations[field], (list, tuple))
+
                         for data in relations[field]:
                             relation_instance = None
+
                             if 'id' in data:
                                 relation_instance = model_field.objects.get(id=data.get('id'))
-                            serializer = serializer_class(data=data, instance=relation_instance)
+
+                            expanded_fields = serializer_class.get_expanded_fields(data)
+                            serializer = serializer_class(
+                                data=data, instance=relation_instance, expand=expanded_fields
+                            )
+
                             if serializer.is_valid():
                                 instances.append(serializer.save())
-                        getattr(instance, field).set(instances)
+                            else:
+                                print(serializer.errors)
+                        getattr(instance, field).set(instances, clear=True)
                     else:
                         pass
         return instance

@@ -96,9 +96,9 @@ class Condicion(SerializableMixin, models.Model):
         max_length=10, verbose_name=_('Tipo Derecha'), blank=True, choices=TIPOS)
     orden = models.PositiveSmallIntegerField(verbose_name=_('Orden'))
     valor_si = models.ManyToManyField(
-        'self', verbose_name=_('Valor SI'), related_name='valores_si')
+        'self', verbose_name=_('Valor SI'), related_name='valores_si', symmetrical=False)
     valor_no = models.ManyToManyField(
-        'self', verbose_name=_('Valor NO'), related_name='valores_no')
+        'self', verbose_name=_('Valor NO'), related_name='valores_no', symmetrical=False)
     campo = models.ForeignKey(
         'main.Campo', verbose_name=_('Campo'), blank=True, null=True,
         related_name='condiciones_set', on_delete=models.CASCADE)
