@@ -266,15 +266,24 @@ class ConjuntoSet extends Component {
     }
   }
 
+  tabEdit(targetKey, action) {
+    action in this && this[action](targetKey)
+  }
+
+  remove(tab) {
+    tab !== 'new' && ApiClient.delete('main', `conjuntos/${tab}/delete`).then(data => {
+      console.log(data)
+      this.props.onDelete && this.props.onDelete()
+    })
+  }
+
   renderContent(conjunto) {
     const hasChild = ConjuntoSet.hasChild(conjunto)
 
-    return !this.state.loading && <Tabs type="editable-card" defaultActiveKey={this.selectedTab} tabPosition="top" style={{height: 'auto'}} onTabClick={this.onTabClick.bind(this)}>
-      {hasChild ?
-        conjunto.childrenSet.edges.map((conjunto) => {
-          return <TabPane closable tab={conjunto.node.nombre} key={conjunto.node.id}>{this.renderTabContent(conjunto.node)}</TabPane>
-        }) : null
-      }
+    return !this.state.loading && <Tabs onEdit={this.tabEdit.bind(this)} type="editable-card" defaultActiveKey={this.selectedTab} tabPosition="top" style={{height: 'auto'}} onTabClick={this.onTabClick.bind(this)}>
+      { hasChild ? conjunto.childrenSet.edges.map((conjunto) => {
+        return <TabPane closable tab={conjunto.node.nombre} key={conjunto.node.id}>{this.renderTabContent(conjunto.node)}</TabPane>
+      }) : null }
       <TabPane key="new" tab={<span><Icon type="plus" />New</span>}></TabPane>
     </Tabs>
   }

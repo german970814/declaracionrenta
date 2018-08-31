@@ -72,6 +72,10 @@ class FormConjunto extends Component {
     }
   }
 
+  componentWillUnmount() {
+    window.sessionStorage.removeItem('automatic')
+  }
+
   getFieldDecorator(field) {
     const defaults = {
       initialValue: this.props.conjunto[field.key] || (field.type === 'checkbox' ? false : '')

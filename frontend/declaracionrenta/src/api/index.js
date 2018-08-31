@@ -4,6 +4,8 @@ export default class Client {
   static base_url = process.env.REACT_APP_API_URL;
   static client = window.fetch.bind(window);
 
+  static defaultHeaders = { 'Content-Type': 'application/json' }
+
   /**
    * Función para hacer las llamadas a la api de graphQL
    * 
@@ -45,6 +47,7 @@ export default class Client {
   }
 
   /**
+   * Method to build POST request
    * 
    * @param {String} module Module name, base request
    * @param {String} path Path to api
@@ -53,7 +56,7 @@ export default class Client {
    */
   static post(module, path, body, headers={}) {
     body = JSON.stringify(body);
-    headers = Object.assign(headers, { 'Content-Type': 'application/json' });
+    headers = Object.assign(headers, Client.defaultHeaders);
 
     const payload = {
       // credentials: 'include',
@@ -64,6 +67,31 @@ export default class Client {
     return Client.client(
       `${Client.base_url}/${module}/${Client.API_PREFIX}/${path}/`,
       { ...payload }
+    ).then(response => {
+      return response.json()
+    })
+  }
+
+  /**
+   * Method to build DELETE requests
+   * 
+   * @param {String} module Module name, base request
+   * @param {String} path Path to API
+   * @param {Object} body Body object with data
+   * @param {Object} headers Headers object to send to server
+   */
+  static delete(module, path, body={}, headers={}) {
+    body = JSON.stringify(body);
+    headers = Object.assign(headers, Client.defaultHeaders);
+
+    const payload = {
+      method: 'DELETE',
+      headers, body
+    }
+
+    return Client.client(
+      `${Client.base_url}/${module}/${Client.API_PREFIX}/${path}/`,
+      {...payload}
     ).then(response => {
       return response.json()
     })
