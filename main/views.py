@@ -78,18 +78,11 @@ def remove_conjunto(request, pk):
     instance = get_object_or_404(models.Conjunto, pk=id)
 
     try:
-        deleted, _w = instance.delete()
-
-        if deleted < 1:
-            args = ({'error': 'Object "{}" with pk #{} can\'t was deleted'.format(
-                models.Conjunto.__name__, id
-            )},)
-            kwargs['status'] = status.HTTP_400_BAD_REQUEST
-        else:
-            args = ({'data': 'Object "{}" with pk #{} was deleted'.format(
-                models.Conjunto.__name__, id
-            )},)
-            kwargs['status'] = status.HTTP_202_ACCEPTED
+        instance.delete()
+        args = ({'data': 'Object "{}" with pk #{} was deleted'.format(
+            models.Conjunto.__name__, id
+        )},)
+        kwargs['status'] = status.HTTP_202_ACCEPTED
     except Exception as exc:
         args = ({'error': exc.__str__()}, )
         kwargs['status'] = status.HTTP_400_BAD_REQUEST

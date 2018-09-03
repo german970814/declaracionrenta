@@ -3,7 +3,7 @@ import { Link, withRouter } from 'react-router-dom'
 import {
   Tabs, Input, InputNumber,
   Button, Row, Col, Popover,
-  Icon, Collapse
+  Icon, Collapse, Modal, message
 } from 'antd'
 import ApiClient from './../../api'
 import Queries from './queries'
@@ -70,6 +70,10 @@ class ConjuntoSet extends Component {
       // si cambia la pestaña que se está viendo, se intentan obtener
       // todos los childrens del nodo o conjunto actual
       this.getChildrensOfNode()
+      if (this.props.onTabClick) {
+        const selectedTab = this.selectedTab || {}
+        this.props.onTabClick(this.getConjuntoByKey(selectedTab))
+      }
     }
   }
 
@@ -262,7 +266,9 @@ class ConjuntoSet extends Component {
           this.props.match.params.crud, tab)
       })
     } else {
-      this.props.history.push({ pathname: `${this.props.location.pathname}/${tab}` })
+      const { pathname } = this.props.location
+      const uri = pathname.endsWith('/') ? pathname.substr(0, pathname.length - 1) : pathname
+      this.props.history.push({ pathname: `${uri}/${tab}` })
     }
   }
 
@@ -271,9 +277,25 @@ class ConjuntoSet extends Component {
   }
 
   remove(tab) {
-    tab !== 'new' && ApiClient.delete('main', `conjuntos/${tab}/delete`).then(data => {
-      console.log(data)
-      this.props.onDelete && this.props.onDelete()
+    tab !== 'new' && this.renderModalRemove(tab)
+  }
+
+  renderModalRemove(tab) {
+    Modal.confirm({
+      title: '¿Deseas eliminar este Grupo?',
+      content: 'Eliminar un contenido será de forma permanente',
+      onOk: () => {
+        tab !== 'new' && ApiClient.delete('main', `conjuntos/${tab}/delete`).then(data => {
+          if (data.error) {
+            message.error(data.error)
+          }
+          if (data.data) {
+            message.success(data.data)
+          }
+          this.props.onDelete && this.props.onDelete()
+        })
+      },
+      onCancel: () => { }
     })
   }
 
@@ -283,7 +305,7 @@ class ConjuntoSet extends Component {
     return !this.state.loading && <Tabs onEdit={this.tabEdit.bind(this)} type="editable-card" defaultActiveKey={this.selectedTab} tabPosition="top" style={{height: 'auto'}} onTabClick={this.onTabClick.bind(this)}>
       { hasChild ? conjunto.childrenSet.edges.map((conjunto) => {
         return <TabPane closable tab={conjunto.node.nombre} key={conjunto.node.id}>{this.renderTabContent(conjunto.node)}</TabPane>
-      }) : null }
+      }) : [] }
       <TabPane key="new" tab={<span><Icon type="plus" />New</span>}></TabPane>
     </Tabs>
   }

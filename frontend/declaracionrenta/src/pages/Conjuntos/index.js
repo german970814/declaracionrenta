@@ -60,6 +60,10 @@ export default class ConjuntosPage extends Component {
     }
   }
 
+  onDelete() {
+    this.getConjuntoByTab(this.props.match.params.tab)
+  }
+
   renderContent() {
     return <Card
       loading={this.state.loadingCard}
@@ -71,7 +75,10 @@ export default class ConjuntosPage extends Component {
       style={{width: '100%'}}
       >
         {this.state.loadingCard === null ? <h5>Escoja un conjunto para empezar</h5> : <div>
-          <ConjuntoSet onTabClick={this.onTabClick.bind(this)} data={this.state.conjuntoSelected} />
+          <ConjuntoSet
+            onDelete={this.onDelete.bind(this)}
+            onTabClick={this.onTabClick.bind(this)}
+            data={this.state.conjuntoSelected} />
         </div>}
       </Card>
   }

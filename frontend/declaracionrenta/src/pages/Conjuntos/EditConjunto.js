@@ -32,7 +32,9 @@ class EditConjunto extends Component {
     if ((prevProps.conjunto && this.props.conjunto) &&
       (prevProps.conjunto.id && !this.props.conjunto.id))
     {
-      this.setState({ visible: true })
+      setTimeout(() => {
+        this.setState({ visible: !this.props.conjunto.id })
+      }, 1000)
     }
   }
 

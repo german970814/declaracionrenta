@@ -30,7 +30,7 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
 
         if hasattr(cls, 'expandable_fields'):
             for field in data:
-                if field in cls.expandable_fields:
+                if field in cls.expandable_fields and isinstance(data[field], (dict, tuple)):
                     expanded_fields.append(field)
         return expanded_fields
 
