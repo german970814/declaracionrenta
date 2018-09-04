@@ -46,6 +46,12 @@ class Condiciones extends Component {
     }
   }
 
+  componentDidUpdate(prevProps) {
+    if (prevProps.model.id !== this.props.model.id) {
+      this.getCondiciones()
+    }
+  }
+
   normalizeCondiciones(condiciones) {
     const MAP_UNIDADES = {
       '_': '%', '__1': 'UVT', '_UVT': 'UVT', '_vod': '', 'UVT': 'UVT'
@@ -76,8 +82,10 @@ class Condiciones extends Component {
   }
 
   getCondiciones() {
-    ApiClient.graphql(Queries.getCondicionesByConjuntoId(this.props.model.id)).then(response => {
+    const { type } = this.props
+    const method = type === 'conjunto' ? 'getCondicionesByConjuntoId' : 'getCondicionesByCampoId'
     // ApiClient.graphql(Queries.getCondicionesByConjuntoId('Q29uanVudG9Ob2RlOjE2')).then(response => {
+    ApiClient.graphql(Queries[method](this.props.model.id)).then(response => {
       const { data } = response
       if (data && data.condiciones && data.condiciones.edges.length) {
         const condiciones = this.normalizeQueryForCondiciones(data.condiciones.edges)

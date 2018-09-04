@@ -13,8 +13,10 @@ class EditConjunto extends Component {
     const conjunto = props.conjunto || {}
     this.state = {
       visible: false,
+      model: conjunto,
       conjunto: conjunto,
       buttonLoading: false,
+      typeCondicion: 'conjunto',
       showTabCampos: conjunto.automatico || false
     }
 
@@ -22,8 +24,11 @@ class EditConjunto extends Component {
   }
 
   componentDidUpdate(prevProps) {
+    // TODO: verificar si cuando ya hay model no se daña nada
     if (prevProps.conjunto !== this.props.conjunto) {
       this.setState({
+        typeCondicion: 'conjunto',
+        model: this.props.conjunto,
         conjunto: this.props.conjunto,
         showTabCampos: !this.props.conjunto.automatico || false
       })
@@ -140,17 +145,29 @@ class EditConjunto extends Component {
   }
 
   onAutomaticoConjuntoChange(value, modal=true) {
-    this.setState({ showTabCampos: !value })
+    const model = this.state.conjunto
+    const typeCondicion = 'conjunto'
+    this.setState({ showTabCampos: !value, model, typeCondicion })
     if (this.condicionesModal.current && value && modal) {
       this.condicionesModal.current.showModal()
     }
   }
 
+  onAutomaticoCampoChange(modal, model) {
+    const typeCondicion = 'campo'
+    this.setState({ model, typeCondicion }, () => {
+      if (this.condicionesModal.current && modal) {
+        this.condicionesModal.current.showModal()
+      }
+    })
+  }
+
   renderCondiciones() {
     return <Condiciones
+      model={this.state.model}
       ref={this.condicionesModal}
       form={{...this.props.form}}
-      model={this.state.conjunto} />
+      type={this.state.typeCondicion} />
   }
 
   renderFormConjunto() {
@@ -175,6 +192,7 @@ class EditConjunto extends Component {
       onClose={this.onClose.bind(this)}
       onCamposUpdated={this.onCamposUpdated.bind(this)}
       conjunto={this.state.conjunto}
+      onAutomaticoChange={this.onAutomaticoCampoChange.bind(this)}
       onNewCampo={this.onNewCampo.bind(this)} />
   }
 

@@ -87,7 +87,9 @@ class ModelSerializerObjectType(object):
             params = info.variable_values.get('params', {})
 
             for field in params:
-                if field in serializer.expandable_fields and isinstance(params[field], (dict, tuple)):
+                if field in serializer.expandable_fields and isinstance(
+                    params[field], (dict, tuple, list)
+                ):
                     expanded_fields.append(field)
             return {'expand': expanded_fields}
         return {}

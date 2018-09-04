@@ -26,17 +26,21 @@ class FlexFieldsModelSerializer(FlexFieldSerializer):
 
     @classmethod
     def get_expanded_fields(cls, data):
+        """Retorna una lista de los campos expandidos de acuerdo a los parámetros."""
         expanded_fields = []
 
         if hasattr(cls, 'expandable_fields'):
             for field in data:
-                if field in cls.expandable_fields and isinstance(data[field], (dict, tuple)):
+                if field in cls.expandable_fields and isinstance(
+                    data[field], (dict, tuple, list)
+                ):
                     expanded_fields.append(field)
         return expanded_fields
 
     def _make_expanded_field_serializer(self, name, nested_expands, nested_includes):
         """
-        Returns an instance of the dynamically created nested serializer.
+        Returns an instance of the dynamically created nested
+        serializer.
         """
         field_options = self.expandable_fields[name]
         serializer_class = field_options[0]

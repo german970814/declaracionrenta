@@ -72,6 +72,11 @@ const functions = {
     return `query {
       condiciones (conjunto: "${id}") { ${pluralizeQuery(CONDICION_CON_RELAY)} }
     }`
+  },
+  getCondicionesByCampoId: (id) => {
+    return `query {
+      condiciones (campo: "${id}") { ${pluralizeQuery(CONDICION_CON_RELAY)} }
+    }`
   }
 }
 

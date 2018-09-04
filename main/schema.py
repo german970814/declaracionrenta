@@ -93,7 +93,6 @@ class ConjuntoNodeMutation(mixins.ModelSerializerObjectType, SerializerMutation)
     @classmethod
     def get_serializer_kwargs(cls, root, info, **input):
         kwargs = super(cls, ConjuntoNodeMutation).get_serializer_kwargs(root, info, **input)
-        # print(kwargs)
         return kwargs
 
 

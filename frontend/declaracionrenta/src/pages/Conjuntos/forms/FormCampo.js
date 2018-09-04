@@ -41,7 +41,8 @@ class FormCampo extends Component {
         key: 'automatico',
         placeholder: 'Automático',
         type: 'checkbox',
-        help: 'Al habilitar este campo, el valor del conjunto dependerá de las condiciones establecidas'
+        help: 'Al habilitar este campo, el valor del conjunto dependerá de las condiciones establecidas',
+        helpWithValue: (onClick) => <Button onClick={onClick}>Ver condiciones</Button>
       },
       orden: {
         key: 'orden',
@@ -207,7 +208,7 @@ class FormCampo extends Component {
   }
 
   render() {
-    const { getFieldDecorator } = this.props.form
+    const { getFieldDecorator, getFieldValue } = this.props.form
     const { campos } = this.props
     let fieldOrder = Object.keys(this.fields)
     fieldOrder = fieldOrder.slice(1, fieldOrder.length)
@@ -237,7 +238,19 @@ class FormCampo extends Component {
               style={{ borderRaius: 4, border: 0, overflow: 'hidden' }}
             >
               {fieldOrder.map((field) => {
-                return <Form.Item key={`${id}-${this.fields[field].key}`}>
+                let extra = field.help || ''
+
+                if (
+                  ('helpWithValue' in this.fields[field]) && ((getFieldValue(`${id}-${this.fields[field].key}`) === undefined &&
+                    (campo && (field in campo) && campo[field])) ||
+                    getFieldValue(`${id}-${this.fields[field].key}`))
+                ) {
+                  extra = this.fields[field].helpWithValue(() => {
+                    this.props.onAutomaticoChange(true, campo)
+                  })
+                }
+
+                return <Form.Item key={`${id}-${this.fields[field].key}`} extra={extra}>
                   {getFieldDecorator(
                     `${id}-${this.fields[field].key}`,
                     this.getFieldDecorator(campo.node, this.fields[field]))(
